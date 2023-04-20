@@ -9,8 +9,8 @@ on:
       version:
         required: true
         type: string
-      configuration:
-        required: true
+      solution:
+        required: false
         type: string
 
 jobs:
@@ -26,8 +26,8 @@ jobs:
 
       - name: Read Metadata
         run: |
-          echo "Configuration: ${{ inputs.configuration }}"
           echo "Version: ${{ inputs.version }}"
+          echo "Solution: ${{ inputs.solution }}"
 
       - name: Checkout Repo
         uses: actions/checkout@v3
@@ -42,14 +42,14 @@ jobs:
 
       - name: Restore NuGet Dependencies
         run: >
-          dotnet restore
+          dotnet restore "${{ inputs.solution }}"
           --nologo
           --verbosity minimal
 
       - name: Build Solution
         run: >
-          dotnet build
-          --configuration "${{ inputs.configuration }}"
+          dotnet build "${{ inputs.solution }}"
+          --configuration "Release"
           -p:Version="${{ inputs.version }}"
           -p:ContinuousIntegrationBuild=true
           -p:PublishRepositoryUrl=true
@@ -62,8 +62,8 @@ jobs:
 
       - name: Test Solution
         run: >
-          dotnet test
-          --configuration "${{ inputs.configuration }}"
+          dotnet test "${{ inputs.solution }}"
+          --configuration "Release"
           --nologo
           --no-build
           --verbosity quiet
@@ -79,8 +79,8 @@ jobs:
 
       - name: Pack Solution
         run: >
-          dotnet pack
-          --configuration "${{ inputs.configuration }}"
+          dotnet pack "${{ inputs.solution }}"
+          --configuration "Release"
           -p:Version="${{ inputs.version }}"
           -p:ContinuousIntegrationBuild=true
           -p:PublishRepositoryUrl=true
