@@ -67,6 +67,8 @@ jobs:
           --nologo
           --no-build
           --verbosity quiet
+          --logger="Console;verbosity=normal"
+          --logger html
           --logger trx
           --results-directory "Tests-${{ runner.os }}-${{ runner.arch }}"
 
