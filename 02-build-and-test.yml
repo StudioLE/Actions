@@ -1,0 +1,98 @@
+name: Build and Test
+
+on:
+  workflow_call:
+    inputs:
+      os:
+        required: true
+        type: string
+      version:
+        required: true
+        type: string
+      configuration:
+        required: true
+        type: string
+
+jobs:
+
+  build-and-test:
+    name: Build and Test
+    runs-on: ${{ inputs.os }}
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: true
+      NUGET_CERT_REVOCATION_MODE: offline
+      DOTNET_NUGET_SIGNATURE_VERIFICATION: false
+    steps:
+
+      - name: Read Metadata
+        run: |
+          echo "Configuration: ${{ inputs.configuration }}"
+          echo "Version: ${{ inputs.version }}"
+
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+
+      - name: Add GitHub Packages as a NuGet source
+        run: >
+          dotnet nuget add source
+          --username StudioLE
+          --password ${{ secrets.GITHUB_TOKEN }}
+          --store-password-in-clear-text
+          --name github "https://nuget.pkg.github.com/StudioLE/index.json"
+
+      - name: Restore NuGet Dependencies
+        run: >
+          dotnet restore
+          --nologo
+          --verbosity minimal
+
+      - name: Build Solution
+        run: >
+          dotnet build
+          --configuration "${{ inputs.configuration }}"
+          -p:Version="${{ inputs.version }}"
+          -p:ContinuousIntegrationBuild=true
+          -p:PublishRepositoryUrl=true
+          -p:EmbedUntrackedSources=true
+          -p:IncludeSymbols=true
+          -p:SymbolPackageFormat=snupkg
+          --nologo
+          --no-restore
+          --verbosity minimal
+
+      - name: Test Solution
+        run: >
+          dotnet test
+          --configuration "${{ inputs.configuration }}"
+          --nologo
+          --no-build
+          --verbosity quiet
+          --logger trx
+          --results-directory "Tests-${{ runner.os }}-${{ runner.arch }}"
+
+      - name: Upload Test Artifact
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: Tests-${{ runner.os }}-${{ runner.arch }}
+          path: Tests-${{ runner.os }}-${{ runner.arch }}
+
+      - name: Pack Solution
+        run: >
+          dotnet pack
+          --configuration "${{ inputs.configuration }}"
+          -p:Version="${{ inputs.version }}"
+          -p:ContinuousIntegrationBuild=true
+          -p:PublishRepositoryUrl=true
+          -p:EmbedUntrackedSources=true
+          -p:IncludeSymbols=true
+          -p:SymbolPackageFormat=snupkg
+          --no-build
+          --output artifacts
+
+      - name: Upload NuGet Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: NuGet-${{runner.os}}-v${{ inputs.version }}
+          path: artifacts
+        if: ${{ always() }}

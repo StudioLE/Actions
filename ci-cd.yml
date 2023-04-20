@@ -1,0 +1,53 @@
+name: CI/CD
+
+on:
+  push:
+  pull_request:
+    branches:
+      - alpha
+
+jobs:
+
+####################################################################################################
+
+  analysis:
+    name: Analysis
+    uses: ./.github/workflows/01-analysis.yml
+    secrets: inherit
+
+####################################################################################################
+
+  build-and-test-ubuntu:
+    name: Ubuntu
+    needs: analysis
+    uses: ./.github/workflows/02-build-and-test.yml
+    with:
+      os: ubuntu-latest
+      configuration: ${{ needs.analysis.outputs.configuration }}
+      version: ${{ needs.analysis.outputs.version }}
+    secrets: inherit
+
+  build-and-test-windows:
+    name: Windows
+    needs: analysis
+    uses: ./.github/workflows/02-build-and-test.yml
+    with:
+      os: windows-latest
+      configuration: ${{ needs.analysis.outputs.configuration }}
+      version: ${{ needs.analysis.outputs.version }}
+    secrets: inherit
+
+####################################################################################################
+
+  publish-nuget:
+    name: Publish NuGet
+    if: ${{ contains(fromJSON('["refs/heads/main", "refs/heads/alpha", "refs/heads/beta"]'), github.ref) }}
+    needs:
+      - analysis
+      - build-and-test-ubuntu
+    uses: ./.github/workflows/03-publish-nuget.yml
+    with:
+      os: ubuntu-latest
+      configuration: ${{ needs.analysis.outputs.configuration }}
+      version: ${{ needs.analysis.outputs.version }}
+    secrets: inherit

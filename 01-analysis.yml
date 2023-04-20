@@ -1,0 +1,38 @@
+name: Analysis
+
+on:
+  workflow_call:
+    outputs:
+      version:
+        value: ${{ jobs.analysis.outputs.version }}
+      configuration:
+        value: ${{ jobs.analysis.outputs.configuration }}
+
+jobs:
+
+  analysis:
+    name: Analysis
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.metadata.outputs.version }}
+      configuration: ${{ steps.metadata.outputs.configuration }}
+    steps:
+
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+
+      - name: Semantic Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx semantic-release@v19.0.5 ${{ env.DRY_RUN }}
+
+      - name: Set Metadata
+        id: metadata
+        run: |
+          echo "configuration=Release" >> $GITHUB_OUTPUT
+          echo "version=$(git describe --tags --abbrev=0 | cut -c 2-)" >> $GITHUB_OUTPUT
+
+      - name: Read Metadata
+        run: |
+          echo "Configuration: ${{ steps.metadata.outputs.configuration }}"
+          echo "Version: ${{ steps.metadata.outputs.version }}"
