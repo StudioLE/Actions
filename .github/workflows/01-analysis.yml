@@ -5,6 +5,8 @@ on:
     outputs:
       version:
         value: ${{ jobs.analysis.outputs.version }}
+      release:
+        value: ${{ jobs.analysis.outputs.release }}
 
 jobs:
 
