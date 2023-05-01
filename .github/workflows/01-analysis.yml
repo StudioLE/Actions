@@ -28,14 +28,14 @@ jobs:
         id: version
         run: |
           VERSION=$(git describe --tags --abbrev=0 | cut -c 2-)
-          echo "version=" >> $GITHUB_OUTPUT
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
 
       - name: Set Release
         id: release
         run: |
           TAGS=$(git tag --points-at HEAD)
           echo "${TAGS}"
-          [[ TAGS == "" ]] && echo "release=false" >> $GITHUB_OUTPUT || echo "release=true" >> $GITHUB_OUTPUT
+          [[ "${TAGS}" == "" ]] && echo "release=false" >> $GITHUB_OUTPUT || echo "release=true" >> $GITHUB_OUTPUT
 
       - name: Read Metadata
         run: |
