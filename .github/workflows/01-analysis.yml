@@ -12,7 +12,8 @@ jobs:
     name: Analysis
     runs-on: ubuntu-latest
     outputs:
-      version: ${{ steps.metadata.outputs.version }}
+      version: ${{ steps.version.outputs.version }}
+      release: ${{ steps.release.outputs.release }}
     steps:
 
       - name: Checkout Repo
@@ -23,11 +24,20 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npx semantic-release@v19.0.5 ${{ env.DRY_RUN }}
 
-      - name: Set Metadata
+      - name: Set Version
         id: metadata
         run: |
-          echo "version=$(git describe --tags --abbrev=0 | cut -c 2-)" >> $GITHUB_OUTPUT
+          VERSION=$(git describe --tags --abbrev=0 | cut -c 2-)
+          echo "version=" >> $GITHUB_OUTPUT
+
+      - name: Set Release
+        id: metadata
+        run: |
+          TAGS=$(git tag --points-at HEAD)
+          echo "${TAGS}"
+          [[ TAGS == "" ]] && echo "release=false" >> "$GITHUB_OUTPUT || echo "release=true" >> $GITHUB_OUTPUT
 
       - name: Read Metadata
         run: |
-          echo "Version: ${{ steps.metadata.outputs.version }}"
+          echo "Version: ${{ steps.version.outputs.version }}"
+          echo "Release: ${{ steps.release.outputs.release }}"
