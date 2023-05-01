@@ -12,6 +12,11 @@ on:
       solution:
         required: false
         type: string
+    secrets:
+      PACKAGES_TOKEN:
+        required: false
+        type: string
+        default: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
 
@@ -36,7 +41,7 @@ jobs:
         run: >
           dotnet nuget add source
           --username StudioLE
-          --password ${{ secrets.GITHUB_TOKEN }}
+          --password ${{ secrets.PACKAGES_TOKEN }}
           --store-password-in-clear-text
           --name github "https://nuget.pkg.github.com/StudioLE/index.json"
 
