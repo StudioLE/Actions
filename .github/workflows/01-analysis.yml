@@ -35,7 +35,7 @@ jobs:
         run: |
           TAGS=$(git tag --points-at HEAD)
           echo "${TAGS}"
-          [[ TAGS == "" ]] && echo "release=false" >> "$GITHUB_OUTPUT || echo "release=true" >> $GITHUB_OUTPUT
+          [[ TAGS == "" ]] && echo "release=false" >> $GITHUB_OUTPUT || echo "release=true" >> $GITHUB_OUTPUT
 
       - name: Read Metadata
         run: |
