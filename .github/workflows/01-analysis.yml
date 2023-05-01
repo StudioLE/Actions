@@ -39,8 +39,14 @@ jobs:
           IS_HEAD_LATEST=$(echo "${HEAD_TAGS}" | grep -x "${LATEST_TAG}" | wc -l)
           echo "IS_HEAD_LATEST: ${IS_HEAD_LATEST}"
           
-          [[ "${IS_HEAD_LATEST}" == "0" ]] && echo "release=false" >> $GITHUB_OUTPUT || echo "release=true" >> $GITHUB_OUTPUT
-          [[ "${IS_HEAD_LATEST}" == "0" ]] && echo "version=0.0.0" >> $GITHUB_OUTPUT || echo "version=${LATEST_VERSION}" >> $GITHUB_OUTPUT
+          if [[ "${IS_HEAD_LATEST}" == "0" ]]
+          then
+            echo "release=false" >> $GITHUB_OUTPUT
+            echo "version=0.0.0" >> $GITHUB_OUTPUT
+          else
+            echo "release=true" >> $GITHUB_OUTPUT
+            echo "version=${LATEST_VERSION}" >> $GITHUB_OUTPUT
+          fi
           
       - name: Read Metadata
         run: |
