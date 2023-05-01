@@ -12,8 +12,8 @@ jobs:
     name: Analysis
     runs-on: ubuntu-latest
     outputs:
-      version: ${{ steps.version.outputs.version }}
-      release: ${{ steps.release.outputs.release }}
+      version: ${{ steps.metadata.outputs.version }}
+      release: ${{ steps.metadata.outputs.release }}
     steps:
 
       - name: Checkout Repo
@@ -24,21 +24,26 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npx semantic-release@v19.0.5 ${{ env.DRY_RUN }}
 
-      - name: Set Version
+      - name: Set Metadata
         id: version
         run: |
-          VERSION=$(git describe --tags --abbrev=0 | cut -c 2-)
-          echo "${VERSION}"
-          echo "version=${VERSION}" >> $GITHUB_OUTPUT
-
-      - name: Set Release
-        id: release
-        run: |
-          TAGS=$(git tag --points-at HEAD)
-          echo "${TAGS}"
-          [[ "${TAGS}" == "" ]] && echo "release=false" >> $GITHUB_OUTPUT || echo "release=true" >> $GITHUB_OUTPUT
-
+          LATEST_TAG=$(git describe --tags --abbrev=0)
+          echo "LATEST_TAG: ${LATEST_TAG}"
+          
+          LATEST_VERSION=$(echo "${LATEST_TAG}" | cut -c 2-)
+          echo "LATEST_VERSION: ${LATEST_VERSION}"
+          
+          HEAD_TAGS=$(git tag --points-at HEAD)
+          echo "HEAD_TAGS: ${HEAD_TAGS}"
+          
+          IS_HEAD_LATEST=$(echo "${HEAD_TAGS}" | grep -x "${LATEST_TAG}" | wc -l)
+          echo "IS_HEAD_LATEST: ${IS_HEAD_LATEST}"
+          
+          [[ "${IS_HEAD_LATEST}" == "0" ]] && echo "release=false" >> $GITHUB_OUTPUT || echo "release=true" >> $GITHUB_OUTPUT
+          [[ "${IS_HEAD_LATEST}" == "0" ]] && echo "version=${LATEST_VERSION}" >> $GITHUB_OUTPUT || echo "version=0.0.0" >> $GITHUB_OUTPUT          
+          echo "GITHUB_OUTPUT: ${GITHUB_OUTPUT}"
+          
       - name: Read Metadata
         run: |
-          echo "Version: ${{ steps.version.outputs.version }}"
-          echo "Release: ${{ steps.release.outputs.release }}"
+          echo "Version: ${{ steps.metadata.outputs.version }}"
+          echo "Release: ${{ steps.metadata.outputs.release }}"
