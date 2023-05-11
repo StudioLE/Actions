@@ -10,11 +10,11 @@ on:
       branches:
         required: false
         type: string
-        default: "['main' {name: 'beta', prerelease: true}, {name: 'alpha', prerelease: true}]"
+#        default: "['main' {name: 'beta', prerelease: true}, {name: 'alpha', prerelease: true}]"
       plugins:
         required: false
         type: string
-        default: "['@semantic-release/commit-analyzer', '@semantic-release/release-notes-generator', '@semantic-release/github']"
+#        default: "['@semantic-release/commit-analyzer', '@semantic-release/release-notes-generator', '@semantic-release/github']"
     outputs:
       version:
         value: ${{ jobs.release.outputs.version }}
@@ -45,8 +45,10 @@ jobs:
         run: > 
           semantic-release
           --repository-url "${REPOSITORY_URL}"
-          --branches "${BRANCHES}"
-          --plugins "${PLUGINS}"
+          --branches "['main' {name: 'beta', prerelease: true}, {name: 'alpha', prerelease: true}]"
+          --plugins "['@semantic-release/commit-analyzer', '@semantic-release/release-notes-generator', '@semantic-release/github']"
+#          --plugins "${PLUGINS}"
+      #          --branches "${BRANCHES}"
 
       - name: Set Metadata
         id: metadata
