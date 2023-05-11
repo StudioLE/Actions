@@ -46,7 +46,7 @@ jobs:
           semantic-release
           --repository-url "${REPOSITORY_URL}"
           --branches "['main' {name: 'beta', prerelease: true}, {name: 'alpha', prerelease: true}]"
-          --plugins "['@semantic-release/commit-analyzer', '@semantic-release/release-notes-generator', '@semantic-release/github']"
+          --plugins "@semantic-release/commit-analyzer,@semantic-release/release-notes-generator,@semantic-release/github"
 #          --plugins "${PLUGINS}"
       #          --branches "${BRANCHES}"
 
