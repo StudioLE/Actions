@@ -2,6 +2,19 @@ name: Create Release
 
 on:
   workflow_call:
+    inputs:
+      repository-url:
+        required: false
+        type: string
+        default: ${{ github.repositoryUrl }}
+      branches:
+        required: false
+        type: string
+        default: "['main' {name: 'beta', prerelease: true}, {name: 'alpha', prerelease: true}]"
+      plugins:
+        required: false
+        type: string
+        default: "['@semantic-release/commit-analyzer', '@semantic-release/release-notes-generator', '@semantic-release/github']"
     outputs:
       version:
         value: ${{ jobs.release.outputs.version }}
@@ -18,25 +31,6 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v3
 
-
-      - name: Cache node-modules 
-        id: cache-npm
-        uses: actions/cache@v3
-        env:
-          cache-name: cache-node-modules
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-build-${{ env.cache-name }}-
-            ${{ runner.os }}-build-
-            ${{ runner.os }}-
-
-      - if: ${{ steps.cache-npm.outputs.cache-hit != 'true' }}
-        name: List the state of node modules
-        continue-on-error: true
-        run: npm list
-
       - name: Install Semantic Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -44,10 +38,16 @@ jobs:
 
       - name: Run Semantic Release
         env:
+          REPOSITORY_URL: ${{ inputs.repository-url }}
+          BRANCHES: ${{ inputs.branches }}
+          PLUGINS: ${{ inputs.plugins }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: > 
           semantic-release
-          
+          --repository-url "${REPOSITORY_URL}"
+          --branches "${BRANCHES}"
+          --plugins "${PLUGINS}"
+
       - name: Set Metadata
         id: metadata
         run: |
