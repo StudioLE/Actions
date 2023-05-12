@@ -25,25 +25,25 @@ jobs:
 
       - name: Semantic Release Configuration
         run: |
-          if [[ ! -f .releaserc ]]
+          if [[ -f .releaserc ]]
           then
-            tee .releaserc <<EOF
-            repositoryUrl: ${{ github.repositoryUrl }}
-            branches:
-              - name: main
-                prerelease: false
-              - name: alpha
-                prerelease: true
-              - name: beta
-                prerelease: true
-            plugins:
-              - "@semantic-release/commit-analyzer"
-              - "@semantic-release/release-notes-generator"
-              - "@semantic-release/github"
-            EOF
+            exit 0
           fi
           
-          cat .releaserc
+          tee .releaserc <<EOF
+          repositoryUrl: ${{ github.repositoryUrl }}
+          branches:
+            - name: main
+              prerelease: false
+            - name: alpha
+              prerelease: true
+            - name: beta
+              prerelease: true
+          plugins:
+            - "@semantic-release/commit-analyzer"
+            - "@semantic-release/release-notes-generator"
+            - "@semantic-release/github"
+          EOF
 
       - name: Run Semantic Release
         env:
