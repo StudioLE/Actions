@@ -2,19 +2,6 @@ name: Create Release
 
 on:
   workflow_call:
-    inputs:
-      repository-url:
-        required: false
-        type: string
-        default: ${{ github.repositoryUrl }}
-      branches:
-        required: false
-        type: string
-#        default: "['main' {name: 'beta', prerelease: true}, {name: 'alpha', prerelease: true}]"
-      plugins:
-        required: false
-        type: string
-#        default: "['@semantic-release/commit-analyzer', '@semantic-release/release-notes-generator', '@semantic-release/github']"
     outputs:
       version:
         value: ${{ jobs.release.outputs.version }}
@@ -36,19 +23,32 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npm install --global semantic-release@v19.0.5
 
+      - name: Semantic Release Configuration
+        run: |
+          if [[ ! -f .releaserc ]]
+          then
+            tee .releaserc <<EOF
+            repositoryUrl: ${{ inputs.repository-url }}
+            branches:
+              - name: main
+                prerelease: false
+              - name: alpha
+                prerelease: true
+              - name: beta
+                prerelease: true
+            plugins:
+              - "@semantic-release/commit-analyzer"
+              - "@semantic-release/release-notes-generator"
+              - "@semantic-release/github"
+            EOF
+          fi
+          
+          cat .releaserc
+
       - name: Run Semantic Release
         env:
-          REPOSITORY_URL: ${{ inputs.repository-url }}
-          BRANCHES: ${{ inputs.branches }}
-          PLUGINS: ${{ inputs.plugins }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: > 
-          semantic-release
-          --repository-url "${REPOSITORY_URL}"
-          --branches "{name: 'main', prerelease: false},{name: 'beta', prerelease: true},{name: 'alpha', prerelease: true}"
-          --plugins "@semantic-release/commit-analyzer,@semantic-release/release-notes-generator,@semantic-release/github"
-#          --plugins "${PLUGINS}"
-      #          --branches "${BRANCHES}"
+        run: semantic-release
 
       - name: Set Metadata
         id: metadata
