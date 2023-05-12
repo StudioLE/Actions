@@ -28,7 +28,7 @@ jobs:
           if [[ ! -f .releaserc ]]
           then
             tee .releaserc <<EOF
-            repositoryUrl: ${{ inputs.repository-url }}
+            repositoryUrl: ${{ github.repositoryUrl }}
             branches:
               - name: main
                 prerelease: false
