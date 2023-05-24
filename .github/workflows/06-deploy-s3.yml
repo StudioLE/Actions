@@ -1,0 +1,81 @@
+name: Build WebAssembly App
+
+on:
+  workflow_call:
+    inputs:
+      name:
+        required: true
+        type: string
+      remove:
+        required: false
+        type: boolean
+      invalidate:
+        required: false
+        type: boolean
+    secrets:
+      AWS_ACCESS_KEY_ID:
+        required: true
+      AWS_SECRET_ACCESS_KEY:
+        required: true
+      AWS_DEFAULT_REGION:
+        required: true
+      S3_TARGET:
+        required: true
+      CF_DISTRIBUTION_ID:
+        required: true
+
+jobs:
+
+  publish:
+    name: Deploy to S3
+    runs-on: ubuntu-latest
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: true
+      NUGET_CERT_REVOCATION_MODE: offline
+      DOTNET_NUGET_SIGNATURE_VERIFICATION: false
+    steps:
+
+      - name: Read Metadata
+        run: |
+          echo "Name: ${{ inputs.name }}"
+          echo "Remove: ${{ inputs.remove }}"
+          echo "Invalidate: ${{ inputs.invalidate }}"
+
+      - name: Download Artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: ${{ inputs.name }}
+          path: artifacts
+
+      - name: Remove existing from S3
+        if: ${{ inputs.rm }}
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+        run: >
+          aws s3 rm
+          --recursive
+          s3://${{ secrets.S3_TARGET }}
+
+      - name: Copy to S3
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+        run: >
+          aws s3 cp
+          --recursive
+          artifacts/
+          s3://${{ secrets.S3_TARGET }}
+
+      - name: Create invalidation
+        if: ${{ inputs.invalidate }}
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+        run: >
+          aws cloudfront create-invalidation
+          --distribution-id ${{ secrets.CF_DISTRIBUTION_ID }}
+          --paths "/*"
