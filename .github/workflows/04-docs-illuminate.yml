@@ -12,6 +12,9 @@ on:
       source:
         required: true
         type: string
+      base:
+        required: true
+        type: string
     secrets:
       PACKAGES_TOKEN:
         required: false
@@ -83,6 +86,8 @@ jobs:
         run: |
           gh release download --pattern Illuminate.WebAssembly-*.zip --output Illuminate.WebAssembly.zip
           unzip Illuminate.WebAssembly.zip -d artifacts/
+          sed -i -e 's/base href=\"\/\"/base href=\"\/${{ inputs.base }}\/v${{ inputs.version }}\/\"/' artifacts/index.html
+
 
       - name: Upload Docs Artifact
         uses: actions/upload-artifact@v3
