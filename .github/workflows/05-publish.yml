@@ -97,16 +97,9 @@ jobs:
 
       - name: Upload Release Asset
         if: ${{ inputs.version != '0.0.0' }}
-        working-directory: artifacts
+        working-directory: artifacts/${{ inputs.path }}
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if [[ "${{ inputs.path }}" == "" ]]
-          then
-            ARTIFACTS_PATH="*"
-          else
-            ARTIFACTS_PATH="${{ inputs.path }}"
-          fi
-          echo "ARTIFACTS_PATH: ${ARTIFACTS_PATH}"
-          zip -r -9 "${{ inputs.name }}.zip" ${ARTIFACTS_PATH}
+          zip -r -9 "${{ inputs.name }}.zip" *
           gh release upload "v${{ inputs.version }}" "${{ inputs.name }}.zip" --clobber
