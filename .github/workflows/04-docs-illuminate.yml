@@ -1,4 +1,4 @@
-name: Generation Documentation
+name: Generate Documentation
 
 on:
   workflow_call:
@@ -9,10 +9,7 @@ on:
       solution:
         required: false
         type: string
-      illuminate-version:
-        required: true
-        type: string
-      illuminate-source:
+      source:
         required: true
         type: string
     secrets:
@@ -21,8 +18,8 @@ on:
 
 jobs:
 
-  generate-docs:
-    name: Generation Documentation
+  docs:
+    name: Generate Documentation
     runs-on: ubuntu-latest
     env:
       DOTNET_CLI_TELEMETRY_OPTOUT: true
@@ -32,6 +29,7 @@ jobs:
         run: |
           echo "Version: ${{ inputs.version }}"
           echo "Solution: ${{ inputs.solution }}"
+          echo "Source: ${{ inputs.source }}"
 
       - name: Checkout Repo
         uses: actions/checkout@v3
@@ -76,7 +74,7 @@ jobs:
         run: >
           Illuminate
           generate
-          --source "${{ inputs.illuminate-source }}"
+          --source "${{ inputs.source }}"
           --output artifacts/wwwroot/SourceExample
 
       - name: Download Illuminate.WebAssembly
