@@ -81,7 +81,7 @@ jobs:
 
       - name: Download Illuminate.WebAssembly
         run: |
-          wget https://github.com/StudioLE/Illuminate/releases/download/v${{ inputs.illuminate }}/Illuminate.WebAssembly-${{ inputs.illuminate }}.zip
+          gh release download --pattern Illuminate.WebAssembly-*.zip --output Illuminate.WebAssembly.zip
           unzip Illuminate.WebAssembly.zip -d artifacts/
 
       - name: Upload Docs Artifact
