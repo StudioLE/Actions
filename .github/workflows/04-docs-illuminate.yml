@@ -69,6 +69,9 @@ jobs:
         run: |
           dotnet tool install --global Illuminate --prerelease
 
+      - name: Create artifacts directory
+        run: mkdir -p artifacts/wwwroot/SourceExample
+
       - name: Run Illuminate.Cli
         run: >
           Illuminate
