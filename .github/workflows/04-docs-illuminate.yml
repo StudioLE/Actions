@@ -67,12 +67,13 @@ jobs:
 
       - name: Install Illuminate.Cli
         run: |
-          dotnet tool install --global Illuminate
+          dotnet tool install --global Illuminate --prerelease
 
       - name: Run Illuminate.Cli
         run: >
           Illuminate
-          --source "${{ inputs.source }}"
+          generate
+          --source "${{ inputs.illuminate-source }}"
           --output artifacts/wwwroot/SourceExample
 
       - name: Download Illuminate.WebAssembly
