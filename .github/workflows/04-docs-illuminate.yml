@@ -80,6 +80,8 @@ jobs:
           --output artifacts/wwwroot/SourceExample
 
       - name: Download Illuminate.WebAssembly
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           gh release download --pattern Illuminate.WebAssembly-*.zip --output Illuminate.WebAssembly.zip
           unzip Illuminate.WebAssembly.zip -d artifacts/
