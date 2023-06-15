@@ -76,14 +76,14 @@ jobs:
           dotnet tool install --global Illuminate --prerelease
 
       - name: Create output directory
-        run: mkdir -p "artifacts/${{ inputs.version }}"
+        run: mkdir -p "artifacts/_data/v${{ inputs.version }}"
 
       - name: Run Illuminate.Cli
         run: >
           Illuminate
           generate
           --source "${{ inputs.source }}"
-          --output "artifacts/${{ inputs.version }}"
+          --output "artifacts/_data/v${{ inputs.version }}"
 
       - name: Download sections from s3
         env:
