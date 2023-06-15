@@ -97,7 +97,7 @@ jobs:
 
       - name: Update sections
         run: |
-          echo "  - ${{ inputs.version }}" >> artifacts/_data/_Sections.yaml
+          echo "  - v${{ inputs.version }}" >> artifacts/_data/_Sections.yaml
           cat artifacts/_data/_Sections.yaml
 
       - name: Upload Docs Artifact
