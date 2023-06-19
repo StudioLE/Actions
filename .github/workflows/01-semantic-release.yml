@@ -21,7 +21,7 @@ jobs:
       - name: Install Semantic Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npm install --global semantic-release@v21.0.2
+        run: npm install --global semantic-release@v21.0.5
 
       - name: Semantic Release Configuration
         run: |
