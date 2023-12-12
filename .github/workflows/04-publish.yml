@@ -1,0 +1,105 @@
+name: Publish
+
+on:
+  workflow_call:
+    inputs:
+      project:
+        required: true
+        type: string
+      version:
+        required: true
+        type: string
+      runtime:
+        required: true
+        type: string
+      npm:
+        required: false
+        type: string
+      workload:
+        required: false
+        type: string
+      name:
+        required: true
+        type: string
+      path:
+        required: false
+        default: ""
+        type: string
+    secrets:
+      PACKAGES_TOKEN:
+        required: false
+
+jobs:
+
+  publish:
+    name: Publish
+    runs-on: ubuntu-latest
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: true
+      NUGET_CERT_REVOCATION_MODE: offline
+      DOTNET_NUGET_SIGNATURE_VERIFICATION: false
+    steps:
+
+    - name: Read Metadata
+      run: |
+        echo "Version: ${{ inputs.version }}"
+        echo "NPM: ${{ inputs.npm }}"
+        echo "Project: ${{ inputs.project }}"
+        echo "Runtime: ${{ inputs.runtime }}"
+        echo "Workload: ${{ inputs.workload }}"
+        echo "Name: ${{ inputs.name }}"
+        echo "Path: ${{ inputs.path }}"
+
+    - name: Checkout Repo
+      uses: actions/checkout@v3
+
+    - name: Restore npm Dependencies
+      if: ${{ inputs.npm != '' }}
+      working-directory: ${{ inputs.npm }}
+      run: |
+        npm install
+        npm run build
+
+    - name: Install workload
+      if: ${{ inputs.workload != '' }}
+      run: dotnet workload install ${{ inputs.workload }}
+
+    - name: Add GitHub Packages as a NuGet source
+      run: |
+        if [[ "${{ secrets.PACKAGES_TOKEN }}" == "" ]]
+        then
+          PASSWORD="${{ secrets.GITHUB_TOKEN }}"
+          echo "Using GITHUB_TOKEN"
+        else
+          PASSWORD="${{ secrets.PACKAGES_TOKEN }}"
+          echo "Using PACKAGES_TOKEN"
+        fi
+
+        dotnet nuget add source \
+          --username StudioLE \
+          --password "${PASSWORD}" \
+          --store-password-in-clear-text \
+          --name github "https://nuget.pkg.github.com/StudioLE/index.json"
+
+    - name: Publish
+      run: >
+        dotnet publish "${{ inputs.project }}"
+        --configuration "Release"
+        -p:Version="${{ inputs.version }}"
+        --runtime "${{ inputs.runtime }}"
+        --output artifacts
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: ${{ inputs.name }}
+        path: artifacts/${{ inputs.path }}
+
+    - name: Upload Release Asset
+      if: ${{ inputs.version != '' }}
+      working-directory: artifacts/${{ inputs.path }}
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        zip -r -9 "${{ inputs.name }}.zip" *
+        gh release upload "v${{ inputs.version }}" "${{ inputs.name }}.zip" --clobber

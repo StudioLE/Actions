@@ -1,0 +1,97 @@
+name: Test
+
+on:
+  workflow_call:
+    inputs:
+      os:
+        required: false
+        type: string
+        default: ubuntu-latest
+      version:
+        required: false
+        type: string
+        default: 0.0.0
+      project:
+        required: false
+        type: string
+    secrets:
+      PACKAGES_TOKEN:
+        required: false
+
+jobs:
+
+  test:
+    name: Test
+    runs-on: ${{ inputs.os }}
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: true
+      NUGET_CERT_REVOCATION_MODE: offline
+      DOTNET_NUGET_SIGNATURE_VERIFICATION: false
+    steps:
+
+    - name: Read Metadata
+      run: |
+        echo "OS: ${{ inputs.os }}"
+        echo "Version: ${{ inputs.version }}"
+        echo "Project: ${{ inputs.project }}"
+        echo "PACKAGES_TOKEN: ${{ env.USE_PACKAGES_TOKEN }}"
+
+    - name: Checkout Repo
+      uses: actions/checkout@v3
+
+    - name: Add GitHub Packages as a NuGet source
+      shell: bash
+      run: |
+        if [[ "${{ secrets.PACKAGES_TOKEN }}" == "" ]]
+        then
+          PASSWORD="${{ secrets.GITHUB_TOKEN }}"
+          echo "Using GITHUB_TOKEN"
+        else
+          PASSWORD="${{ secrets.PACKAGES_TOKEN }}"
+          echo "Using PACKAGES_TOKEN"
+        fi
+
+        dotnet nuget add source \
+          --username StudioLE \
+          --password "${PASSWORD}" \
+          --store-password-in-clear-text \
+          --name github "https://nuget.pkg.github.com/StudioLE/index.json"
+
+    - name: Restore NuGet Dependencies
+      run: >
+        dotnet restore "${{ inputs.project }}"
+        --nologo
+        --verbosity minimal
+
+    - name: Build
+      run: >
+        dotnet build "${{ inputs.project }}"
+        --configuration "Release"
+        -p:Version="${{ inputs.version }}"
+        -p:ContinuousIntegrationBuild=true
+        -p:PublishRepositoryUrl=true
+        -p:EmbedUntrackedSources=true
+        -p:IncludeSymbols=true
+        -p:SymbolPackageFormat=snupkg
+        --nologo
+        --no-restore
+        --verbosity minimal
+
+    - name: Test
+      run: >
+        dotnet test "${{ inputs.project }}"
+        --configuration "Release"
+        --nologo
+        --no-build
+        --verbosity quiet
+        --logger="Console;verbosity=normal"
+        --logger html
+        --logger trx
+        --results-directory "Tests-${{ runner.os }}-${{ runner.arch }}"
+
+    - name: Upload Test Artifact
+      if: ${{ always() }}
+      uses: actions/upload-artifact@v3
+      with:
+        name: Tests-${{ runner.os }}-${{ runner.arch }}
+        path: Tests-${{ runner.os }}-${{ runner.arch }}
