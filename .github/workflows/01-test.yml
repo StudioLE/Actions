@@ -37,7 +37,7 @@ jobs:
         echo "PACKAGES_TOKEN: ${{ env.USE_PACKAGES_TOKEN }}"
 
     - name: Checkout Repo
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Add GitHub Packages as a NuGet source
       shell: bash
@@ -91,7 +91,7 @@ jobs:
 
     - name: Upload Test Artifact
       if: ${{ always() }}
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: Tests-${{ runner.os }}-${{ runner.arch }}
         path: Tests-${{ runner.os }}-${{ runner.arch }}
