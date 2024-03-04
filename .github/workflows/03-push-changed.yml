@@ -1,0 +1,139 @@
+name: Push
+
+on:
+  workflow_call:
+    inputs:
+      os:
+        required: false
+        type: string
+        default: ubuntu-latest
+      version:
+        required: false
+        type: string
+        default: 0.0.0
+      project:
+        required: false
+        type: string
+    secrets:
+      PACKAGES_TOKEN:
+        required: false
+
+jobs:
+
+  push:
+    name: Push
+    runs-on: ${{ inputs.os }}
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: true
+      NUGET_CERT_REVOCATION_MODE: offline
+      DOTNET_NUGET_SIGNATURE_VERIFICATION: false
+    steps:
+
+    - name: Read Metadata
+      run: |
+        echo "OS: ${{ inputs.os }}"
+        echo "Version: ${{ inputs.version }}"
+        echo "Project: ${{ inputs.project }}"
+        echo "PACKAGES_TOKEN: ${{ env.USE_PACKAGES_TOKEN }}"
+
+    - name: Checkout Repo
+      uses: actions/checkout@v4
+
+    - name: Add GitHub Packages as a NuGet source
+      shell: bash
+      run: |
+        if [[ "${{ secrets.PACKAGES_TOKEN }}" == "" ]]
+        then
+          PASSWORD="${{ secrets.GITHUB_TOKEN }}"
+          echo "Using GITHUB_TOKEN"
+        else
+          PASSWORD="${{ secrets.PACKAGES_TOKEN }}"
+          echo "Using PACKAGES_TOKEN"
+        fi
+
+        dotnet nuget add source \
+          --username StudioLE \
+          --password "${PASSWORD}" \
+          --store-password-in-clear-text \
+          --name github "https://nuget.pkg.github.com/StudioLE/index.json"
+
+    - name: Determine changed files
+      id: set
+      run: |
+        git fetch origin 'refs/tags/*:refs/tags/*'
+        TAGS=$(git tag --list 'v*' --sort=-committerdate)
+        TAGS_EXCEPT_LATEST=$(echo "${TAGS}" | awk 'NR>1')
+        TAGS_EXCEPT_PRE_RELEASE=$(echo "${TAGS_EXCEPT_LATEST}" | awk '$0 !~ /-/')
+        LATEST_TAG=$(echo "${TAGS_EXCEPT_PRE_RELEASE}" | head -n 1)
+
+        echo ""
+        echo "### Files with changes between ${LATEST_TAG} and HEAD"
+        CHANGED_FILES=$(git diff --name-only "${LATEST_TAG}")
+        echo "${CHANGED_FILES}"
+
+        echo ""
+        echo "### Directories with changes between ${LATEST_TAG} and HEAD"
+        CHANGED_DIRS=$(echo "${CHANGED_FILES}" | cut -d / -f 1-2 -s | sort -u)
+        echo "${CHANGED_DIRS}"
+
+        PROJECTS=""
+        while IFS= read -r DIR
+        do
+          PROJECTS_IN_DIR=$(find "${DIR}" -iname '*.csproj')
+          if [[ "${PROJECTS_IN_DIR}" != "" ]]
+          then
+            PROJECTS+="${PROJECTS_IN_DIR};"
+          fi
+        done <<< "${CHANGED_DIRS}"
+
+        echo ""
+        echo "### Projects with changes between ${LATEST_TAG} and HEAD"
+        PROJECTS_PER_LINE=$(echo "${PROJECTS}" | tr ';' '\n')
+        echo "${PROJECTS_PER_LINE}"
+
+        if [[ "${PROJECTS}" == "" ]]
+        then
+          echo "No projects changed..."
+          echo "projects=" >> ${GITHUB_OUTPUT}
+        else
+          echo "projects=${PROJECTS}" >> ${GITHUB_OUTPUT}
+        fi
+
+    - name: Read changed projects
+      run: |
+        PROJECTS=$(echo "${{ steps.set.outputs.projects }}" | tr ';' '\n')
+        echo "${PROJECTS}"
+
+    - name: Pack
+      if: ${{ steps.set.outputs.projects != '' }}
+      run: |
+        PROJECTS=$(echo "${{ steps.set.outputs.projects }}" | tr ';' '\n')
+
+        while IFS= read -r PROJECT
+        do
+          echo ""
+          echo "### Packing ${PROJECT}"
+          echo ""
+          dotnet pack "${PROJECT}" \
+            --configuration "Release" \
+            -p:Version="${{ inputs.version }}" \
+            -p:ContinuousIntegrationBuild=true \
+            -p:PublishRepositoryUrl=true \
+            -p:EmbedUntrackedSources=true \
+            -p:IncludeSymbols=true \
+            -p:SymbolPackageFormat=snupkg \
+            --output artifacts
+        done <<< "${PROJECTS}"
+
+    - name: List Artifacts
+      if: ${{ steps.set.outputs.projects != '' }}
+      run: ls -1 artifacts
+
+    - name: Push To GitHub Packages
+      if: ${{ steps.set.outputs.projects != '' }}
+      run: >
+        dotnet nuget push "artifacts/*"
+        --skip-duplicate
+        --source "https://nuget.pkg.github.com/StudioLE/index.json"
+        --symbol-source "https://nuget.pkg.github.com/StudioLE/index.json"
+        --api-key "${{ secrets.GITHUB_TOKEN }}"
