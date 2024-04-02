@@ -3,10 +3,19 @@ name: Release
 on:
   workflow_call:
     inputs:
-      version:
+      os:
         required: false
         type: string
-        default: v22.0.2
+        default: ubuntu-latest
+      nuget_feed:
+        required: false
+        type: string
+      nuget_username:
+        required: false
+        type: string
+    secrets:
+      nuget_password:
+        required: false
     outputs:
       version:
         value: ${{ jobs.release.outputs.version }}
@@ -17,103 +26,91 @@ jobs:
 
   release:
     name: Release
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.os }}
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: true
+      NUGET_CERT_REVOCATION_MODE: offline
+      DOTNET_NUGET_SIGNATURE_VERIFICATION: false
     outputs:
-      version: ${{ steps.set.outputs.version }}
-      environment: ${{ steps.set.outputs.environment }}
+      version: ${{ steps.set-version.outputs.version }}
+      environment: ${{ steps.set-environment.outputs.environment }}
     steps:
 
     - name: Checkout Repo
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        fetch-tags: true
 
-    - name: Install Semantic Release
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: npm install --global semantic-release@${{ inputs.version }}
+    - name: Add NuGet Source
+      if: ${{ inputs.nuget_feed != '' }}
+      shell: bash
+      run: >
+        dotnet nuget add source
+        --username "${{ inputs.nuget_username }}"
+        --password "${{ secrets.nuget_password }}"
+        --store-password-in-clear-text
+        "${{ inputs.nuget_feed }}"
 
-    - name: Semantic Release Configuration
+    - name: Install Surveyor
+      run: dotnet tool install --global Surveyor --prerelease
+
+    - name: Determine Version
+      id: set-version
       run: |
-        if [[ -f .releaserc ]]
-        then
-          exit 0
-        fi
-
-        tee .releaserc <<EOF
-        {
-          "branches":
-          [
-            { "name": "main", "prerelease": false },
-            { "name": "alpha", "prerelease": true },
-            { "name": "beta", "prerelease": true }
-          ],
-          "plugins":
-          [
-            [
-              "@semantic-release/commit-analyzer",
-              {
-                "preset": "angular",
-                "releaseRules": [
-                  { "breaking": true, "release": "major" },
-                  { "revert": true, "release": "patch" },
-                  { "type": "feat", "release": "minor" },
-                  { "type": "fix", "release": "patch" },
-                  { "type": "build", "release": "patch" },
-                  { "type": "chore", "release": "patch" },
-                  { "type": "ci", "release": "patch" },
-                  { "type": "doc", "release": "patch" },
-                  { "type": "docs", "release": "patch" },
-                  { "type": "style", "release": "patch" },
-                  { "type": "refactor", "release": "patch" },
-                  { "type": "perf", "release": "patch" },
-                  { "type": "test", "release": "patch" },
-                  { "type": "tests", "release": "patch" }
-                ]
-              }
-            ],
-            "@semantic-release/release-notes-generator",
-            "@semantic-release/github"
-          ]
-        }
-        EOF
-
-    - name: Run Semantic Release
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: semantic-release
-
-    - name: Set
-      id: set
-      run: |
-        LATEST_TAG=$(git describe --tags --abbrev=0)
-        echo "LATEST_TAG: ${LATEST_TAG}"
-
-        LATEST_VERSION=$(echo "${LATEST_TAG}" | cut -c 2-)
+        LATEST_VERSION=$(Surveyor version)
         echo "LATEST_VERSION: ${LATEST_VERSION}"
 
-        HEAD_TAGS=$(git tag --points-at HEAD)
-        echo "HEAD_TAGS: ${HEAD_TAGS}"
-
-        IS_HEAD_LATEST=$(echo "${HEAD_TAGS}" | grep -x "${LATEST_TAG}" | wc -l)
-        echo "IS_HEAD_LATEST: ${IS_HEAD_LATEST}"
-
-        if [[ "${IS_HEAD_LATEST}" == "0" ]]
+        if [[ "${LATEST_VERSION}" == "" ]]
         then
           echo "version=" >> $GITHUB_OUTPUT
         else
           echo "version=${LATEST_VERSION}" >> $GITHUB_OUTPUT
         fi
 
-        if [[ "${IS_HEAD_LATEST}" == "0" ]]
+    - name: Create Release Notes
+      if: ${{ steps.set-version.outputs.version != '' }}
+      run: |
+        mkdir artifacts
+        Surveyor release-notes > artifacts/RELEASE_NOTES.md
+        cat artifacts/RELEASE_NOTES.md
+
+    - name: Create Release
+      if: ${{ steps.set-version.outputs.version != '' && ! contains(steps.set-version.outputs.version, '-') }}
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: >
+        gh release create
+        "v${{ steps.set-version.outputs.version }}"
+        --notes-file artifacts/RELEASE_NOTES.md
+
+    - name: Create Pre-Release
+      if: ${{ steps.set-version.outputs.version != '' && contains(steps.set-version.outputs.version, '-') }}
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: >
+        gh release create
+        "v${{ steps.set-version.outputs.version }}"
+        --notes-file artifacts/RELEASE_NOTES.md
+        --prerelease
+
+    - name: Determine Environment
+      id: set-environment
+      run: |
+        if [[ "${{ github.ref_name }}" == "alpha" ]]
         then
           echo "environment=Development" >> $GITHUB_OUTPUT
-        elif [[ "${LATEST_TAG}" == *"-"* ]]
+        elif [[ "${{ github.ref_name }}" == "beta" ]]
         then
           echo "environment=Staging" >> $GITHUB_OUTPUT
-        else
+        elif [[ "${{ github.ref_name }}" == "main" ]]
+        then
           echo "environment=Production" >> $GITHUB_OUTPUT
+        else
+          echo "environment=" >> $GITHUB_OUTPUT
         fi
 
     - name: Read
       run: |
-        echo "Version: ${{ steps.set.outputs.version }}"
-        echo "Environment: ${{ steps.set.outputs.environment }}"
+        echo "Version: ${{ steps.set-version.outputs.version }}"
+        echo "Environment: ${{ steps.set-environment.outputs.environment }}"

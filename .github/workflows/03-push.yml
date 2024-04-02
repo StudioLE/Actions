@@ -7,15 +7,17 @@ on:
         required: false
         type: string
         default: ubuntu-latest
-      version:
-        required: false
-        type: string
-        default: 0.0.0
       project:
         required: false
         type: string
+      nuget_feed:
+        required: false
+        type: string
+      nuget_username:
+        required: false
+        type: string
     secrets:
-      PACKAGES_TOKEN:
+      nuget_password:
         required: false
 
 jobs:
@@ -29,33 +31,21 @@ jobs:
       DOTNET_NUGET_SIGNATURE_VERIFICATION: false
     steps:
 
-    - name: Read Metadata
-      run: |
-        echo "OS: ${{ inputs.os }}"
-        echo "Version: ${{ inputs.version }}"
-        echo "Project: ${{ inputs.project }}"
-        echo "PACKAGES_TOKEN: ${{ env.USE_PACKAGES_TOKEN }}"
-
     - name: Checkout Repo
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        fetch-tags: true
 
-    - name: Add GitHub Packages as a NuGet source
+    - name: Add NuGet Source
+      if: ${{ inputs.nuget_feed != '' }}
       shell: bash
-      run: |
-        if [[ "${{ secrets.PACKAGES_TOKEN }}" == "" ]]
-        then
-          PASSWORD="${{ secrets.GITHUB_TOKEN }}"
-          echo "Using GITHUB_TOKEN"
-        else
-          PASSWORD="${{ secrets.PACKAGES_TOKEN }}"
-          echo "Using PACKAGES_TOKEN"
-        fi
-
-        dotnet nuget add source \
-          --username StudioLE \
-          --password "${PASSWORD}" \
-          --store-password-in-clear-text \
-          --name github "https://nuget.pkg.github.com/StudioLE/index.json"
+      run: >
+        dotnet nuget add source
+        --username "${{ inputs.nuget_username }}"
+        --password "${{ secrets.nuget_password }}"
+        --store-password-in-clear-text
+        "${{ inputs.nuget_feed }}"
 
     - name: Restore NuGet Dependencies
       run: >
@@ -67,7 +57,6 @@ jobs:
       run: >
         dotnet build "${{ inputs.project }}"
         --configuration "Release"
-        -p:Version="${{ inputs.version }}"
         -p:ContinuousIntegrationBuild=true
         -p:PublishRepositoryUrl=true
         -p:EmbedUntrackedSources=true
@@ -81,7 +70,6 @@ jobs:
       run: >
         dotnet pack "${{ inputs.project }}"
         --configuration "Release"
-        -p:Version="${{ inputs.version }}"
         -p:ContinuousIntegrationBuild=true
         -p:PublishRepositoryUrl=true
         -p:EmbedUntrackedSources=true

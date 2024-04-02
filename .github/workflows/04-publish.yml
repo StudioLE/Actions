@@ -6,9 +6,6 @@ on:
       project:
         required: true
         type: string
-      version:
-        required: true
-        type: string
       runtime:
         required: true
         type: string
@@ -25,8 +22,17 @@ on:
         required: false
         default: ""
         type: string
+      version:
+        required: true
+        type: string
+      nuget_feed:
+        required: false
+        type: string
+      nuget_username:
+        required: false
+        type: string
     secrets:
-      PACKAGES_TOKEN:
+      nuget_password:
         required: false
 
 jobs:
@@ -40,18 +46,11 @@ jobs:
       DOTNET_NUGET_SIGNATURE_VERIFICATION: false
     steps:
 
-    - name: Read Metadata
-      run: |
-        echo "Version: ${{ inputs.version }}"
-        echo "NPM: ${{ inputs.npm }}"
-        echo "Project: ${{ inputs.project }}"
-        echo "Runtime: ${{ inputs.runtime }}"
-        echo "Workload: ${{ inputs.workload }}"
-        echo "Name: ${{ inputs.name }}"
-        echo "Path: ${{ inputs.path }}"
-
     - name: Checkout Repo
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        fetch-tags: true
 
     - name: Restore npm Dependencies
       if: ${{ inputs.npm != '' }}
@@ -64,28 +63,20 @@ jobs:
       if: ${{ inputs.workload != '' }}
       run: dotnet workload install ${{ inputs.workload }}
 
-    - name: Add GitHub Packages as a NuGet source
-      run: |
-        if [[ "${{ secrets.PACKAGES_TOKEN }}" == "" ]]
-        then
-          PASSWORD="${{ secrets.GITHUB_TOKEN }}"
-          echo "Using GITHUB_TOKEN"
-        else
-          PASSWORD="${{ secrets.PACKAGES_TOKEN }}"
-          echo "Using PACKAGES_TOKEN"
-        fi
-
-        dotnet nuget add source \
-          --username StudioLE \
-          --password "${PASSWORD}" \
-          --store-password-in-clear-text \
-          --name github "https://nuget.pkg.github.com/StudioLE/index.json"
+    - name: Add NuGet Source
+      if: ${{ inputs.nuget_feed != '' }}
+      shell: bash
+      run: >
+        dotnet nuget add source
+        --username "${{ inputs.nuget_username }}"
+        --password "${{ secrets.nuget_password }}"
+        --store-password-in-clear-text
+        "${{ inputs.nuget_feed }}"
 
     - name: Publish
       run: >
         dotnet publish "${{ inputs.project }}"
         --configuration "Release"
-        -p:Version="${{ inputs.version }}"
         --runtime "${{ inputs.runtime }}"
         --output artifacts
 
