@@ -83,6 +83,7 @@ jobs:
         gh release create
         "v${{ steps.set-version.outputs.version }}"
         --notes-file artifacts/RELEASE_NOTES.md
+        --target ${{ github.ref_name }}
 
     - name: Create Pre-Release
       if: ${{ steps.set-version.outputs.version != '' && contains(steps.set-version.outputs.version, '-') }}
@@ -92,6 +93,7 @@ jobs:
         gh release create
         "v${{ steps.set-version.outputs.version }}"
         --notes-file artifacts/RELEASE_NOTES.md
+        --target ${{ github.ref_name }}
         --prerelease
 
     - name: Determine Environment
