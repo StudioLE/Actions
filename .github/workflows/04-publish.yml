@@ -76,6 +76,8 @@ jobs:
     - name: Publish
       run: >
         dotnet publish "${{ inputs.project }}"
+        -p:SurveyorFeed="${{ inputs.nuget_feed }}"
+        -p:SurveyorToken="${{ secrets.nuget_password }}"
         --configuration "Release"
         --runtime "${{ inputs.runtime }}"
         --output artifacts

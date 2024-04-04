@@ -47,6 +47,27 @@ jobs:
         --store-password-in-clear-text
         "${{ inputs.nuget_feed }}"
 
+    - name: Restore NuGet Dependencies
+      run: >
+        dotnet restore "${{ inputs.project }}"
+        --nologo
+        --verbosity minimal
+
+    - name: Build
+      run: >
+        dotnet build "${{ inputs.project }}"
+        --configuration "Release"
+        -p:ContinuousIntegrationBuild=true
+        -p:PublishRepositoryUrl=true
+        -p:EmbedUntrackedSources=true
+        -p:IncludeSymbols=true
+        -p:SymbolPackageFormat=snupkg
+        -p:SurveyorFeed="${{ inputs.nuget_feed }}"
+        -p:SurveyorToken="${{ secrets.nuget_password }}"
+        --nologo
+        --no-restore
+        --verbosity minimal
+
     - name: Pack
       run: >
         dotnet pack "${{ inputs.project }}"
@@ -56,6 +77,9 @@ jobs:
         -p:EmbedUntrackedSources=true
         -p:IncludeSymbols=true
         -p:SymbolPackageFormat=snupkg
+        -p:SurveyorFeed="${{ inputs.nuget_feed }}"
+        -p:SurveyorToken="${{ secrets.nuget_password }}"
+        --no-build
         --output artifacts
 
     - name: List Artifacts
