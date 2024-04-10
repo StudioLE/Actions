@@ -10,6 +10,9 @@ on:
       project:
         required: false
         type: string
+      run-before:
+        required: false
+        type: string
       nuget_feed:
         required: false
         type: string
@@ -52,6 +55,10 @@ jobs:
         dotnet restore "${{ inputs.project }}"
         --nologo
         --verbosity minimal
+
+    - name: Run Before Hook
+      if: ${{ inputs.run-before != '' }}
+      run: ${{ inputs.run-before }}
 
     - name: Build
       run: >
