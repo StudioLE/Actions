@@ -1,0 +1,143 @@
+name: Documentation
+
+on:
+  workflow_call:
+    inputs:
+      os:
+        required: false
+        type: string
+        default: ubuntu-latest
+      project:
+        required: false
+        type: string
+      nuget_feed:
+        required: false
+        type: string
+      nuget_username:
+        required: false
+        type: string
+      environment:
+        required: true
+        type: string
+      source:
+        required: true
+        type: string
+      section:
+        required: true
+        type: string
+      version:
+        required: true
+        type: string
+      message:
+        required: false
+        type: string
+      user_name:
+        required: false
+        type: string
+        default: ${{ github.actor }}
+      user_email:
+        required: false
+        type: string
+        default: ${{ github.actor }}@users.noreply.github.com
+    secrets:
+      nuget_password:
+        required: false
+      documentation_token:
+        required: true
+
+jobs:
+
+  documentation:
+    name: Documentation
+    runs-on: ${{ inputs.os }}
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: true
+      NUGET_CERT_REVOCATION_MODE: offline
+      DOTNET_NUGET_SIGNATURE_VERIFICATION: false
+    steps:
+
+    - name: Checkout Repo
+      uses: actions/checkout@v4
+      with:
+        path: repo
+        fetch-depth: 0
+        fetch-tags: true
+
+    - name: Checkout Documentation
+      uses: actions/checkout@v4
+      with:
+        repository: StudioLE/Documentation
+        path: docs
+        token: ${{ secrets.documentation_token }}
+
+    - name: Add NuGet Source
+      if: ${{ inputs.nuget_feed != '' }}
+      shell: bash
+      run: >
+        dotnet nuget add source
+        --username "${{ inputs.nuget_username }}"
+        --password "${{ secrets.nuget_password }}"
+        --store-password-in-clear-text
+        "${{ inputs.nuget_feed }}"
+
+    - name: Build
+      working-directory: repo
+      run: >
+        dotnet build "${{ inputs.project }}"
+        --configuration "Release"
+        -p:ContinuousIntegrationBuild=true
+        -p:PublishRepositoryUrl=true
+        -p:EmbedUntrackedSources=true
+        -p:IncludeSymbols=true
+        -p:SymbolPackageFormat=snupkg
+        -p:GeneratePackageOnBuild=true
+        -p:GenerateDocumentationFile=true
+        -p:ProduceReferenceAssembly=true
+        -p:CopyLocalLockFileAssemblies=true
+        -p:SurveyorFeed="${{ inputs.nuget_feed }}"
+        -p:SurveyorToken="${{ secrets.nuget_password }}"
+        --nologo
+        --verbosity minimal
+
+    - name: Install Illuminate
+      run: dotnet tool install --global Illuminate --prerelease
+
+    - name: Generate v${{ inputs.version }} Documentation
+      working-directory: docs
+      run: >
+        Illuminate generate
+        "../repo/${{ inputs.source }}"
+        --section "${{ inputs.section }}"
+        --version "v${{ inputs.version }}"
+
+    - name: Clear latest Documentation
+      if: ${{ inputs.environment == 'Production' }}
+      working-directory: docs
+      continue-on-error: true
+      run: rm -rf "${{ inputs.section }}/latest"
+
+    - name: Generate Latest Documentation
+      if: ${{ inputs.environment == 'Production' }}
+      working-directory: docs
+      run: >
+        Illuminate generate
+        "../repo/${{ inputs.source }}"
+        --section "${{ inputs.section }}"
+        --version "latest"
+
+    - name: Commit and push
+      working-directory: docs
+      run: |
+        if [[ "${{ inputs.message }}" == "" ]]
+        then
+          MESSAGE="feat(${{ inputs.section }}): Added documentation for v${{ inputs.version }}"
+        else
+          MESSAGE="${{ inputs.message }}"
+        fi
+        git status
+        git config user.name "${{ inputs.user_name }}"
+        git config user.email "${{ inputs.user_email }}"
+        git add --all
+        git commit --allow-empty -m "${MESSAGE}"
+        git push
+
