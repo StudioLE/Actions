@@ -118,6 +118,8 @@ jobs:
 
     - name: Generate Latest Documentation
       if: ${{ inputs.environment == 'Production' }}
+      env:
+        LOGGING__LOGLEVEL__DEFAULT: Trace
       working-directory: docs
       run: >
         Illuminate generate
