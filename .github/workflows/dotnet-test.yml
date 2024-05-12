@@ -85,11 +85,17 @@ jobs:
       run: mkdir -p artifacts/tests
 
     - name: Update Summary
-      run: echo "[View Full Results](https://studiole.github.io/Tests/${{ github.repository }}/${{ github.run_id }})" >> $GITHUB_STEP_SUMMARY
+      run: |
+        echo "[Test Results](https://studiole.github.io/Tests/${{ github.repository }}/${{ github.run_id }})" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "[![Coverage](https://studiole.github.io/Tests/${{ github.repository }}/${{ github.run_id }}/coverage.svg)](https://studiole.github.io/Tests/${{ github.repository }}/${{ github.run_id }}/coverage)" >> $GITHUB_STEP_SUMMARY
 
     - name: Test
       run: >
         dotnet test "${{ inputs.project }}"
+        -p:CollectCoverage=true
+        -p:CoverletOutput='../../artifacts/tests/'
+        -p:CoverletOutputFormat=opencover
         --configuration "Release"
         --nologo
         --no-build
@@ -97,8 +103,33 @@ jobs:
         --logger="Console;verbosity=normal"
         --logger GitHubActions
         --logger html
-        --logger trx
         --results-directory artifacts/tests
+
+    - name: Install ReportGenerator
+      run:  dotnet tool install -g dotnet-reportgenerator-globaltool
+
+    - name: Generate Coverage Badges
+      run: >
+        reportgenerator
+        "-reports:artifacts/tests/coverage.opencover.xml"
+        "-targetdir:artifacts/tests/badges"
+        "-reporttypes:Badges"
+
+    - name: Remove Redundant Badges
+      run: |
+        cp artifacts/tests/badges/badge_shieldsio_linecoverage_blue.svg artifacts/tests/coverage.svg
+        rm -rf artifacts/tests/badges
+
+    - name: Generate Coverage Reports
+      run: >
+        reportgenerator
+        "-reports:artifacts/tests/coverage.opencover.xml"
+        "-targetdir:artifacts/tests/coverage"
+        "-reporttypes:Html;MarkdownSummaryGithub"
+
+    - name: Update Summary
+      run: |
+        cat artifacts/tests/coverage/SummaryGithub.md | tail -n +2 >> $GITHUB_STEP_SUMMARY
 
     - name: List Test Results
       if: ${{ always() }}
