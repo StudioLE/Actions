@@ -1,4 +1,4 @@
-name: Push
+name: Build, Test, Pack
 
 on:
   workflow_call:
@@ -7,6 +7,9 @@ on:
         required: false
         type: string
         default: ubuntu-latest
+      run-before:
+        required: false
+        type: string
       project:
         required: false
         type: string
@@ -16,15 +19,22 @@ on:
       nuget_username:
         required: false
         type: string
+      pack:
+        required: false
+        type: string
+        default: false
     secrets:
       nuget_password:
         required: false
 
 jobs:
 
-  push:
-    name: Push
+  test:
+    name: Build, Test, Pack
     runs-on: ${{ inputs.os }}
+    defaults:
+      run:
+        shell: bash
     env:
       DOTNET_CLI_TELEMETRY_OPTOUT: true
       NUGET_CERT_REVOCATION_MODE: offline
@@ -39,13 +49,16 @@ jobs:
 
     - name: Add NuGet Source
       if: ${{ inputs.nuget_feed != '' }}
-      shell: bash
       run: >
         dotnet nuget add source
         --username "${{ inputs.nuget_username }}"
         --password "${{ secrets.nuget_password }}"
         --store-password-in-clear-text
         "${{ inputs.nuget_feed }}"
+
+    - name: Run Before Hook
+      if: ${{ inputs.run-before != '' }}
+      run: ${{ inputs.run-before }}
 
     - name: Restore NuGet Dependencies
       run: >
@@ -68,7 +81,39 @@ jobs:
         --no-restore
         --verbosity minimal
 
+    - name: Make Directory
+      run: mkdir -p artifacts/tests
+
+    - name: Update Summary
+      run: echo "[View Full Results](https://studiole.github.io/Tests/${{ github.repository }}/${{ github.run_id }})" >> $GITHUB_STEP_SUMMARY
+
+    - name: Test
+      run: >
+        dotnet test "${{ inputs.project }}"
+        --configuration "Release"
+        --nologo
+        --no-build
+        --verbosity quiet
+        --logger="Console;verbosity=normal"
+        --logger GitHubActions
+        --logger html
+        --logger trx
+        --results-directory artifacts/tests
+
+    - name: List Test Results
+      if: ${{ always() }}
+      continue-on-error: true
+      run: ls -R1 artifacts/tests
+
+    - name: Upload Test Results
+      if: ${{ always() }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: Tests-${{ runner.os }}-${{ runner.arch }}
+        path: artifacts/tests
+
     - name: Pack
+      if: ${{ inputs.pack == 'true' }}
       run: >
         dotnet pack "${{ inputs.project }}"
         --configuration "Release"
@@ -80,15 +125,16 @@ jobs:
         -p:SurveyorFeed="${{ inputs.nuget_feed }}"
         -p:SurveyorToken="${{ secrets.nuget_password }}"
         --no-build
-        --output artifacts
+        --output artifacts/packages
 
-    - name: List Artifacts
-      run: ls -1 artifacts
+    - name: List Packages
+      if: ${{ inputs.pack == 'true' }}
+      continue-on-error: true
+      run: ls -1 artifacts/packages
 
-    - name: Push To GitHub Packages
-      run: >
-        dotnet nuget push "artifacts/*"
-        --skip-duplicate
-        --source "https://nuget.pkg.github.com/StudioLE/index.json"
-        --symbol-source "https://nuget.pkg.github.com/StudioLE/index.json"
-        --api-key "${{ secrets.GITHUB_TOKEN }}"
+    - name: Upload Packages
+      if: ${{ inputs.pack == 'true' }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: Packages
+        path: artifacts/packages

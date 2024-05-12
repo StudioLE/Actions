@@ -57,6 +57,8 @@ jobs:
 
     - name: Determine Version
       id: set-version
+      env:
+        LOGGING__LOGLEVEL__DEFAULT: Trace
       run: |
         LATEST_VERSION=$(Surveyor version)
         echo "LATEST_VERSION: ${LATEST_VERSION}"
@@ -70,6 +72,8 @@ jobs:
 
     - name: Create Release Notes
       if: ${{ steps.set-version.outputs.version != '' }}
+      env:
+        LOGGING__LOGLEVEL__DEFAULT: Trace
       run: |
         mkdir artifacts
         Surveyor release-notes > artifacts/RELEASE_NOTES.md
@@ -77,7 +81,6 @@ jobs:
 
     - name: Create Release
       if: ${{ steps.set-version.outputs.version != '' && ! contains(steps.set-version.outputs.version, '-') }}
-      continue-on-error: true
       env:
         GH_TOKEN: ${{ github.token }}
       run: >
@@ -88,7 +91,6 @@ jobs:
 
     - name: Create Pre-Release
       if: ${{ steps.set-version.outputs.version != '' && contains(steps.set-version.outputs.version, '-') }}
-      continue-on-error: true
       env:
         GH_TOKEN: ${{ github.token }}
       run: >

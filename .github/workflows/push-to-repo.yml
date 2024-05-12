@@ -1,0 +1,81 @@
+name: Push to Repo
+
+on:
+  workflow_call:
+    inputs:
+      os:
+        required: false
+        type: string
+        default: ubuntu-latest
+      repo:
+        required: true
+        type: string
+      rm:
+        required: false
+        type: string
+        default: ''
+      artifact:
+        required: true
+        type: string
+      path:
+        required: true
+        type: string
+      message:
+        required: false
+        type: string
+      user_name:
+        required: false
+        type: string
+        default: ${{ github.actor }}
+      user_email:
+        required: false
+        type: string
+        default: ${{ github.actor }}@users.noreply.github.com
+    secrets:
+      repo_token:
+        required: true
+
+jobs:
+
+  commit:
+    name: Push to Repo
+    runs-on: ${{ inputs.os }}
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: true
+      NUGET_CERT_REVOCATION_MODE: offline
+      DOTNET_NUGET_SIGNATURE_VERIFICATION: false
+    steps:
+
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        repository: ${{ inputs.repo }}
+        token: ${{ secrets.repo_token }}
+
+    - name: Remove
+      if: ${{ inputs.rm != '' }}
+      continue-on-error: true
+      run: rm -rf ${{ inputs.rm }}
+
+    - name: Download
+      uses: actions/download-artifact@v4
+      with:
+        name: ${{ inputs.artifact }}
+        path: ${{ inputs.path }}
+
+    - name: List
+      run: ls -R1 ${{ inputs.path }}
+
+    - name: Commit
+      run: |
+        git config user.name "${{ inputs.user_name }}"
+        git config user.email "${{ inputs.user_email }}"
+        git add --all
+        git commit --allow-empty -m "${{ inputs.message }}"
+
+    - name: Status
+      run: git status
+
+    - name: Push
+      run: git push
+

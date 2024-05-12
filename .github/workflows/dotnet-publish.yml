@@ -15,15 +15,12 @@ on:
       workload:
         required: false
         type: string
-      name:
+      artifact:
         required: true
         type: string
       path:
         required: false
         default: ""
-        type: string
-      version:
-        required: true
         type: string
       nuget_feed:
         required: false
@@ -85,14 +82,5 @@ jobs:
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ inputs.name }}
+        name: ${{ inputs.artifact }}
         path: artifacts/${{ inputs.path }}
-
-    - name: Upload Release Asset
-      if: ${{ inputs.version != '' }}
-      working-directory: artifacts/${{ inputs.path }}
-      env:
-        GH_TOKEN: ${{ github.token }}
-      run: |
-        zip -r -9 "${{ inputs.name }}.zip" *
-        gh release upload "v${{ inputs.version }}" "${{ inputs.name }}.zip" --clobber

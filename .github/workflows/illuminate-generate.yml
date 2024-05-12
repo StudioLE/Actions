@@ -16,34 +16,19 @@ on:
       nuget_username:
         required: false
         type: string
-      environment:
-        required: true
+      latest:
+        required: false
         type: string
+        default: ""
       source:
         required: true
         type: string
       section:
         required: true
         type: string
-      version:
-        required: true
-        type: string
-      message:
-        required: false
-        type: string
-      user_name:
-        required: false
-        type: string
-        default: ${{ github.actor }}
-      user_email:
-        required: false
-        type: string
-        default: ${{ github.actor }}@users.noreply.github.com
     secrets:
       nuget_password:
         required: false
-      documentation_token:
-        required: true
 
 jobs:
 
@@ -59,16 +44,8 @@ jobs:
     - name: Checkout Repo
       uses: actions/checkout@v4
       with:
-        path: repo
         fetch-depth: 0
         fetch-tags: true
-
-    - name: Checkout Documentation
-      uses: actions/checkout@v4
-      with:
-        repository: StudioLE/Documentation
-        path: docs
-        token: ${{ secrets.documentation_token }}
 
     - name: Add NuGet Source
       if: ${{ inputs.nuget_feed != '' }}
@@ -80,8 +57,25 @@ jobs:
         --store-password-in-clear-text
         "${{ inputs.nuget_feed }}"
 
+    - name: Install Surveyor
+      run: dotnet tool install --global Surveyor --prerelease
+
+    - name: Determine Version
+      id: set-version
+      env:
+        LOGGING__LOGLEVEL__DEFAULT: Trace
+      run: |
+        LATEST_VERSION=$(Surveyor version)
+        echo "LATEST_VERSION: ${LATEST_VERSION}"
+
+        if [[ "${LATEST_VERSION}" == "" ]]
+        then
+          echo "version=" >> $GITHUB_OUTPUT
+        else
+          echo "version=${LATEST_VERSION}" >> $GITHUB_OUTPUT
+        fi
+
     - name: Build
-      working-directory: repo
       run: >
         dotnet build "${{ inputs.project }}"
         --configuration "Release"
@@ -102,44 +96,37 @@ jobs:
     - name: Install Illuminate
       run: dotnet tool install --global Illuminate --prerelease
 
-    - name: Generate v${{ inputs.version }} Documentation
-      working-directory: docs
-      run: >
-        Illuminate generate
-        "../repo/${{ inputs.source }}"
-        --section "${{ inputs.section }}"
-        --version "v${{ inputs.version }}"
+    - name: Make Directory
+      run: mkdir -p artifacts
 
-    - name: Clear latest Documentation
-      if: ${{ inputs.environment == 'Production' }}
-      working-directory: docs
-      continue-on-error: true
-      run: rm -rf "${{ inputs.section }}/latest"
-
-    - name: Generate Latest Documentation
-      if: ${{ inputs.environment == 'Production' }}
+    - name: Generate v${{ steps.set-version.outputs.version }} Documentation
+      working-directory: artifacts
       env:
         LOGGING__LOGLEVEL__DEFAULT: Trace
-      working-directory: docs
       run: >
         Illuminate generate
-        "../repo/${{ inputs.source }}"
+        "../${{ inputs.source }}"
+        --section "${{ inputs.section }}"
+        --version "v${{ steps.set-version.outputs.version }}"
+
+    - name: Generate Latest Documentation
+      if: ${{ inputs.latest == 'true' }}
+      working-directory: artifacts
+      env:
+        LOGGING__LOGLEVEL__DEFAULT: Trace
+      run: >
+        Illuminate generate
+        "../${{ inputs.source }}"
         --section "${{ inputs.section }}"
         --version "latest"
 
-    - name: Commit and push
-      working-directory: docs
-      run: |
-        if [[ "${{ inputs.message }}" == "" ]]
-        then
-          MESSAGE="feat(${{ inputs.section }}): Added documentation for v${{ inputs.version }}"
-        else
-          MESSAGE="${{ inputs.message }}"
-        fi
-        git status
-        git config user.name "${{ inputs.user_name }}"
-        git config user.email "${{ inputs.user_email }}"
-        git add --all
-        git commit --allow-empty -m "${MESSAGE}"
-        git push
+    - name: List
+      run: ls -R1 artifacts
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: Documentation
+        path: artifacts
+
 

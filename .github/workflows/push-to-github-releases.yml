@@ -1,0 +1,52 @@
+name: Push to Repo
+
+on:
+  workflow_call:
+    inputs:
+      os:
+        required: false
+        type: string
+        default: ubuntu-latest
+      artifact:
+        required: true
+        type: string
+      name:
+        required: true
+        type: string
+      version:
+        required: true
+        type: string
+
+jobs:
+
+  commit:
+    name: Push to GitHub Releases
+    runs-on: ${{ inputs.os }}
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: true
+      NUGET_CERT_REVOCATION_MODE: offline
+      DOTNET_NUGET_SIGNATURE_VERIFICATION: false
+    steps:
+
+    - name: Download
+      uses: actions/download-artifact@v4
+      with:
+        name: ${{ inputs.artifact }}
+
+    - name: List
+      run: ls -R1 ${{ inputs.path }}
+
+    - name: Create Archive
+      run: zip -r -9 "${{ inputs.name }}.zip" *
+
+    - name: Upload Release Asset
+      if: ${{ inputs.version != '' }}
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: >
+        gh release upload
+        "v${{ inputs.version }}"
+        "${{ inputs.name }}.zip"
+        --clobber
+        --repo "${{ github.repository }}"
+

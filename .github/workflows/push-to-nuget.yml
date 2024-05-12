@@ -1,0 +1,44 @@
+name: Push
+
+on:
+  workflow_call:
+    inputs:
+      os:
+        required: false
+        type: string
+        default: ubuntu-latest
+      nuget_feed:
+        required: false
+        type: string
+      nuget_username:
+        required: false
+        type: string
+    secrets:
+      nuget_password:
+        required: false
+
+jobs:
+
+  push:
+    name: Push
+    runs-on: ${{ inputs.os }}
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: true
+      NUGET_CERT_REVOCATION_MODE: offline
+      DOTNET_NUGET_SIGNATURE_VERIFICATION: false
+    steps:
+
+    - uses: actions/download-artifact@v4
+      with:
+        name: Packages
+
+    - name: List
+      run: ls -R1
+
+    - name: Push to NuGet Feed
+      run: >
+        dotnet nuget push "*"
+        --skip-duplicate
+        --source "${{ inputs.nuget_feed }}"
+        --symbol-source "${{ inputs.nuget_feed }}"
+        --api-key "${{ secrets.nuget_password }}"
