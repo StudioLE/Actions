@@ -53,7 +53,7 @@ jobs:
         "${{ inputs.nuget_feed }}"
 
     - name: Install Surveyor
-      run: dotnet tool install --global Surveyor --prerelease
+      run: dotnet tool install --global Surveyor
 
     - name: Determine Version
       id: set-version

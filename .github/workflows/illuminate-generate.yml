@@ -58,7 +58,7 @@ jobs:
         "${{ inputs.nuget_feed }}"
 
     - name: Install Surveyor
-      run: dotnet tool install --global Surveyor --prerelease
+      run: dotnet tool install --global Surveyor
 
     - name: Determine Version
       id: set-version
@@ -94,7 +94,7 @@ jobs:
         --verbosity minimal
 
     - name: Install Illuminate
-      run: dotnet tool install --global Illuminate --prerelease
+      run: dotnet tool install --global Illuminate
 
     - name: Make Directory
       run: mkdir -p artifacts
