@@ -10,6 +10,10 @@ on:
       artifact:
         required: true
         type: string
+      file:
+        required: false
+        default: ""
+        type: string
       name:
         required: true
         type: string
@@ -36,11 +40,27 @@ jobs:
     - name: List
       run: ls -R1 ${{ inputs.path }}
 
+    - name: Rename File
+      if: ${{ inputs.file == 'true' }}
+      run: mv * "${{ inputs.name }}"
+
     - name: Create Archive
+      if: ${{ inputs.file != 'true' }}
       run: zip -r -9 "${{ inputs.name }}.zip" *
 
-    - name: Upload Release Asset
-      if: ${{ inputs.version != '' }}
+    - name: Upload File
+      if: ${{ inputs.version != '' && inputs.file == 'true'  }}
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: >
+        gh release upload
+        "v${{ inputs.version }}"
+        "${{ inputs.name }}"
+        --clobber
+        --repo "${{ github.repository }}"
+
+    - name: Upload Archive
+      if: ${{ inputs.version != '' && inputs.file != 'true' }}
       env:
         GH_TOKEN: ${{ github.token }}
       run: >

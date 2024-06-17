@@ -15,6 +15,10 @@ on:
       workload:
         required: false
         type: string
+      properties:
+        required: false
+        default: ""
+        type: string
       artifact:
         required: true
         type: string
@@ -78,6 +82,7 @@ jobs:
         --configuration "Release"
         --runtime "${{ inputs.runtime }}"
         --output artifacts
+        ${{ inputs.properties }}
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v4

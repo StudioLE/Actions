@@ -38,6 +38,12 @@ jobs:
       runtime: linux-x64
       npm: ""
       workload: ""
+      properties: >
+        -p:PublishSingleFile=true
+        -p:IncludeNativeLibrariesForSelfExtract=true
+        -p:SelfContained=false
+        -p:DebugType=embedded
+        -p:GenerateDocumentationFile=false
       artifact: Cli-Linux
       nuget_feed: https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
       nuget_username: ${{ github.repository_owner }}
@@ -53,6 +59,12 @@ jobs:
       runtime: win-x64
       npm: ""
       workload: ""
+      properties: >
+        -p:PublishSingleFile=true
+        -p:IncludeNativeLibrariesForSelfExtract=true
+        -p:SelfContained=false
+        -p:DebugType=embedded
+        -p:GenerateDocumentationFile=false
       artifact: Cli-Windows
       nuget_feed: https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
       nuget_username: ${{ github.repository_owner }}
@@ -120,7 +132,8 @@ jobs:
     uses: StudioLE/Actions/.github/workflows/push-to-github-releases.yml@v5
     with:
       artifact: Cli-Linux
-      name: StudioLE.Example.Cli-${{ needs.release.outputs.version }}-Linux-x64
+      name: StudioLE.Example.Cli-linux-x64-v${{ needs.release.outputs.version }}
+      file: true
       version: ${{ needs.release.outputs.version }}
 
   push-cli-windows:
@@ -132,7 +145,8 @@ jobs:
     uses: StudioLE/Actions/.github/workflows/push-to-github-releases.yml@v5
     with:
       artifact: Cli-Windows
-      name: StudioLE.Example.Cli-${{ needs.release.outputs.version }}-Windows-x64
+      name: StudioLE.Example.Cli-win-x64-v${{ needs.release.outputs.version }}.exe
+      file: true
       version: ${{ needs.release.outputs.version }}
 
   push-documentation:
