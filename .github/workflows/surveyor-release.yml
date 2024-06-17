@@ -86,6 +86,7 @@ jobs:
       run: >
         gh release create
         "v${{ steps.set-version.outputs.version }}"
+        --title "v${{ steps.set-version.outputs.version }}"
         --notes-file artifacts/RELEASE_NOTES.md
         --target ${{ github.ref_name }}
 
@@ -96,6 +97,7 @@ jobs:
       run: >
         gh release create
         "v${{ steps.set-version.outputs.version }}"
+        --title "v${{ steps.set-version.outputs.version }}"
         --notes-file artifacts/RELEASE_NOTES.md
         --target ${{ github.ref_name }}
         --prerelease
