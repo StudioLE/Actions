@@ -7,16 +7,21 @@ on:
         required: false
         type: string
         default: ubuntu-latest
-      version:
-        required: false
+      nuget_feed:
+        required: true
         type: string
-        default: 0.0.0
+      nuget_username:
+        required: true
+        type: string
+      version:
+        required: true
+        type: string
       project:
         required: false
         type: string
     secrets:
-      PACKAGES_TOKEN:
-        required: false
+      nuget_password:
+        required: true
 
 jobs:
 
@@ -29,33 +34,20 @@ jobs:
       DOTNET_NUGET_SIGNATURE_VERIFICATION: false
     steps:
 
-    - name: Read Metadata
-      run: |
-        echo "OS: ${{ inputs.os }}"
-        echo "Version: ${{ inputs.version }}"
-        echo "Project: ${{ inputs.project }}"
-        echo "PACKAGES_TOKEN: ${{ env.USE_PACKAGES_TOKEN }}"
-
     - name: Checkout Repo
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        fetch-tags: true
 
-    - name: Add GitHub Packages as a NuGet source
-      shell: bash
-      run: |
-        if [[ "${{ secrets.PACKAGES_TOKEN }}" == "" ]]
-        then
-          PASSWORD="${{ secrets.GITHUB_TOKEN }}"
-          echo "Using GITHUB_TOKEN"
-        else
-          PASSWORD="${{ secrets.PACKAGES_TOKEN }}"
-          echo "Using PACKAGES_TOKEN"
-        fi
-
-        dotnet nuget add source \
-          --username StudioLE \
-          --password "${PASSWORD}" \
-          --store-password-in-clear-text \
-          --name github "https://nuget.pkg.github.com/StudioLE/index.json"
+    - name: Add NuGet Source
+      if: ${{ inputs.nuget_feed != '' }}
+      run: >
+        dotnet nuget add source
+        --username "${{ inputs.nuget_username }}"
+        --password "${{ secrets.nuget_password }}"
+        --store-password-in-clear-text
+        "${{ inputs.nuget_feed }}"
 
     - name: Restore NuGet Dependencies
       run: >
@@ -88,15 +80,15 @@ jobs:
         -p:IncludeSymbols=true
         -p:SymbolPackageFormat=snupkg
         --no-build
-        --output artifacts
+        --output artifacts/packages
 
     - name: List Artifacts
-      run: ls -1 artifacts
+      run: ls -1 artifacts/packages
 
-    - name: Push To GitHub Packages
+    - name: Push To NuGet Feed
       run: >
-        dotnet nuget push "artifacts/*"
+        dotnet nuget push "artifacts/packages/*"
         --skip-duplicate
-        --source "https://nuget.pkg.github.com/StudioLE/index.json"
-        --symbol-source "https://nuget.pkg.github.com/StudioLE/index.json"
-        --api-key "${{ secrets.GITHUB_TOKEN }}"
+        --source "${{ inputs.nuget_feed }}"
+        --symbol-source "${{ inputs.nuget_feed }}"
+        --api-key "${{ secrets.nuget_password }}"
