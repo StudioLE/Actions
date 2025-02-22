@@ -105,13 +105,16 @@ jobs:
     - name: Determine Environment
       id: set-environment
       run: |
-        if [[ "${{ github.ref_name }}" == "alpha" ]]
+        if [[ "${{ github.ref_name }}" == "main" ]]
+        then
+          echo "environment=Development" >> $GITHUB_OUTPUT
+        elif [[ "${{ github.ref_name }}" == "alpha" ]]
         then
           echo "environment=Development" >> $GITHUB_OUTPUT
         elif [[ "${{ github.ref_name }}" == "beta" ]]
         then
           echo "environment=Staging" >> $GITHUB_OUTPUT
-        elif [[ "${{ github.ref_name }}" == "main" ]]
+        elif [[ "${{ github.ref_name }}" == "release" ]]
         then
           echo "environment=Production" >> $GITHUB_OUTPUT
         else
