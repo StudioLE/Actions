@@ -60,9 +60,25 @@ jobs:
         npm install
         npm run build
 
+    - name: List workload
+      if: ${{ inputs.workload != '' }}
+      run: dotnet workload list
+
     - name: Install workload
       if: ${{ inputs.workload != '' }}
       run: dotnet workload install ${{ inputs.workload }}
+
+    - name: List workload
+      if: ${{ inputs.workload != '' }}
+      run: dotnet workload list
+
+    - name: Restore workload
+      if: ${{ inputs.workload != '' }}
+      run: dotnet workload restore
+
+    - name: List workload
+      if: ${{ inputs.workload != '' }}
+      run: dotnet workload list
 
     - name: Add NuGet Source
       if: ${{ inputs.nuget_feed != '' }}
