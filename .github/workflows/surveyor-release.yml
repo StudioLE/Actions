@@ -54,7 +54,7 @@ jobs:
         fetch-tags: true
 
     - name: Add NuGet Source
-      if: ${{ inputs.nuget_feed != '' }}
+      if: inputs.nuget_feed != ''
       shell: bash
       run: >
         dotnet nuget add source
@@ -81,8 +81,21 @@ jobs:
           echo "version=${LATEST_VERSION}" >> $GITHUB_OUTPUT
         fi
 
+    - name: Determine Type
+      id: set-type
+      run: |
+        if [[ "${{ steps.set-version.outputs.version }}" == *"-"* ]]
+        then
+          echo "type=prerelease" >> $GITHUB_OUTPUT
+        elif [[ -n "${{ steps.set-version.outputs.version }}" ]]
+        then
+          echo "type=release" >> $GITHUB_OUTPUT
+        else
+          echo "type=" >> $GITHUB_OUTPUT
+        fi
+
     - name: Create Release Notes
-      if: ${{ steps.set-version.outputs.version != '' }}
+      if: steps.set-type.outputs.type == 'release'
       env:
         LOGGING__LOGLEVEL__DEFAULT: Trace
       run: |
@@ -91,7 +104,7 @@ jobs:
         cat artifacts/RELEASE_NOTES.md
 
     - name: GitHub Release
-      if: ${{ steps.set-version.outputs.version != '' && ! contains(steps.set-version.outputs.version, '-') }}
+      if: steps.set-type.outputs.type == 'release'
       env:
         GH_TOKEN: ${{ github.token }}
       run: >
@@ -102,7 +115,7 @@ jobs:
         --target ${{ github.ref_name }}
 
     - name: Git Tag
-      if: ${{ steps.set-version.outputs.version != '' && contains(steps.set-version.outputs.version, '-') }}
+      if: steps.set-type.outputs.type == 'prerelease'
       env:
         GH_TOKEN: ${{ github.token }}
       run: |
@@ -128,19 +141,6 @@ jobs:
           echo "environment=Production" >> $GITHUB_OUTPUT
         else
           echo "environment=" >> $GITHUB_OUTPUT
-        fi
-
-    - name: Determine Type
-      id: set-type
-      run: |
-        if [[ "${{ steps.set-version.outputs.version }}" == *"-"* ]]
-        then
-          echo "type=prerelease" >> $GITHUB_OUTPUT
-        elif [[ -n "${{ steps.set-version.outputs.version }}" ]]
-        then
-          echo "type=release" >> $GITHUB_OUTPUT
-        else
-          echo "type=" >> $GITHUB_OUTPUT
         fi
 
     - name: Read
