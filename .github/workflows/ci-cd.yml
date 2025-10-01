@@ -166,6 +166,18 @@ jobs:
     secrets:
       nuget_password: ${{ secrets.GITHUB_TOKEN }}
 
+  push-nuget:
+    name: NuGet
+    if: needs.release.outputs.type == 'release'
+    needs:
+    - release
+    uses: StudioLE/Actions/.github/workflows/push-to-nuget.yml@v7
+    with:
+      nuget_feed: https://api.nuget.org/v3/index.json
+      nuget_username: ""
+    secrets:
+      nuget_password: ${{ secrets.NUGET_TOKEN }}
+
   push-cli-linux:
     name: Linux Cli
     if: needs.release.outputs.type == 'release'
