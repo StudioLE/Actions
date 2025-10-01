@@ -1,0 +1,69 @@
+name: Docker Push
+on:
+  workflow_call:
+    inputs:
+      os:
+        required: false
+        type: string
+        default: ubuntu-latest
+      registry:
+        required: false
+        type: string
+        default: ghcr.io
+      user:
+        required: true
+        type: string
+      name:
+        required: true
+        type: string
+      version:
+        required: true
+        type: string
+      tag:
+        required: false
+        type: string
+    secrets:
+      password:
+        required: false
+jobs:
+
+  docker-push:
+    runs-on: ${{ inputs.os }}
+    steps:
+
+    - name: Set Docker Image
+      run: echo "DOCKER_IMAGE=${{ inputs.registry }}/${{ inputs.user }}/${{ inputs.name }}" >> $GITHUB_ENV
+
+    - name: Login
+      run: echo "$PW" | docker login ${{ inputs.registry }} -u ${{ inputs.user }} --password-stdin
+      env:
+        PW: ${{ secrets.password }}
+
+    - name: Pull
+      run: >
+        docker pull
+        $DOCKER_IMAGE:${{ github.sha }}
+
+    - name: Tag version
+      run: >
+        docker tag
+        $DOCKER_IMAGE:${{ github.sha }}
+        $DOCKER_IMAGE:${{ inputs.version }}
+
+    - name: Push version
+      run: >
+        docker push
+        $DOCKER_IMAGE:${{ inputs.version }}
+
+    - name: Tag
+      if: inputs.tag != ''
+      run: >
+        docker tag
+        $DOCKER_IMAGE:${{ github.sha }}
+        $DOCKER_IMAGE:${{ inputs.tag }}
+
+    - name: Push
+      if: inputs.tag != ''
+      run: >
+        docker push
+        $DOCKER_IMAGE:${{ inputs.tag }}

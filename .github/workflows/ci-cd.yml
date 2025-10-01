@@ -102,6 +102,44 @@ jobs:
     secrets:
       nuget_password: ${{ secrets.PACKAGES_TOKEN }}
 
+  docker-build:
+    name: Docker Build
+    uses: StudioLE/Actions/.github/workflows/docker-build.yml@v7
+    with:
+      name: example
+      user: studiole
+    secrets:
+      password: ${{ secrets.GITHUB_TOKEN }}
+
+  docker-push-prerelease:
+    name: Docker Push Prerelease
+    if: needs.release.outputs.type == 'prerelease'
+    needs:
+    - docker-build
+    - release
+    uses: StudioLE/Actions/.github/workflows/docker-push.yml@v7
+    with:
+      name: example
+      user: studiole
+      version: ${{ needs.release.outputs.version }}
+    secrets:
+      password: ${{ secrets.GITHUB_TOKEN }}
+
+  docker-push-release:
+    name: Docker Push Release
+    if: needs.release.outputs.type == 'release'
+    needs:
+    - docker-build
+    - release
+    uses: StudioLE/Actions/.github/workflows/docker-push.yml@v7
+    with:
+      name: example
+      user: studiole
+      version: ${{ needs.release.outputs.version }}
+      tag: latest
+    secrets:
+      password: ${{ secrets.GITHUB_TOKEN }}
+
   push-tests:
     name: Test Results
     if: always()
