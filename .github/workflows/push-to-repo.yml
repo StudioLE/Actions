@@ -58,7 +58,7 @@ jobs:
         token: ${{ secrets.repo_token }}
 
     - name: Remove
-      if: ${{ inputs.rm != '' }}
+      if: inputs.rm != ''
       continue-on-error: true
       run: rm -rf ${{ inputs.rm }}
 

@@ -23,7 +23,7 @@ jobs:
 
   test-windows:
     name: Windows
-    if: ${{ github.ref_type == 'branch' && contains(fromJSON('["main", "alpha", "beta", "release"]'), github.ref_name) }}
+    if: github.ref_type == 'branch' && contains(fromJSON('["main", "alpha", "beta", "release"]'), github.ref_name)
     uses: StudioLE/Actions/.github/workflows/dotnet-test.yml@v7
     with:
       project: ""
@@ -35,7 +35,7 @@ jobs:
 
   publish-cli-linux:
     name: Linux CLI
-    if: ${{ github.ref_type == 'branch' && contains(fromJSON('["main", "alpha", "beta", "release"]'), github.ref_name) }}
+    if: github.ref_type == 'branch' && contains(fromJSON('["main", "alpha", "beta", "release"]'), github.ref_name)
     uses: StudioLE/Actions/.github/workflows/dotnet-publish.yml@v7
     with:
       project: StudioLE.Example.Cli/src/StudioLE.Example.Cli.csproj
@@ -56,7 +56,7 @@ jobs:
 
   publish-cli-windows:
     name: Windows CLI
-    if: ${{ github.ref_type == 'branch' && contains(fromJSON('["main", "alpha", "beta", "release"]'), github.ref_name) }}
+    if: github.ref_type == 'branch' && contains(fromJSON('["main", "alpha", "beta", "release"]'), github.ref_name)
     uses: StudioLE/Actions/.github/workflows/dotnet-publish.yml@v7
     with:
       project: StudioLE.Example.Cli/src/StudioLE.Example.Cli.csproj
@@ -77,7 +77,7 @@ jobs:
 
   documentation:
     name: Documentation
-    if: ${{ github.ref_type == 'branch' && contains(fromJSON('["main", "alpha", "beta", "release"]'), github.ref_name) }}
+    if: github.ref_type == 'branch' && contains(fromJSON('["main", "alpha", "beta", "release"]'), github.ref_name)
     uses: StudioLE/Actions/.github/workflows/illuminate-generate.yml@v7
     with:
       project: ""
@@ -92,7 +92,7 @@ jobs:
 
   release:
     name: Release
-    if: ${{ github.ref_type == 'branch' && contains(fromJSON('["main", "alpha", "beta", "release"]'), github.ref_name) }}
+    if: github.ref_type == 'branch' && contains(fromJSON('["main", "alpha", "beta", "release"]'), github.ref_name)
     needs:
     - test-ubuntu
     uses: StudioLE/Actions/.github/workflows/surveyor-release.yml@v7
@@ -104,7 +104,7 @@ jobs:
 
   push-tests:
     name: Test Results
-    if: ${{ always() }}
+    if: always()
     needs:
     - test-ubuntu
     uses: StudioLE/Actions/.github/workflows/push-to-repo.yml@v7
@@ -171,7 +171,7 @@ jobs:
 
   environment:
     name: Environment
-    if: ${{ needs.release.outputs.environment != '' }}
+    if: needs.release.outputs.environment != ''
     needs:
     - release
     runs-on: ubuntu-latest

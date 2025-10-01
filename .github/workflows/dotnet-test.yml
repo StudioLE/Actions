@@ -48,7 +48,7 @@ jobs:
         fetch-tags: true
 
     - name: Add NuGet Source
-      if: ${{ inputs.nuget_feed != '' }}
+      if: inputs.nuget_feed != ''
       run: >
         dotnet nuget add source
         --username "${{ inputs.nuget_username }}"
@@ -57,7 +57,7 @@ jobs:
         "${{ inputs.nuget_feed }}"
 
     - name: Run Before Hook
-      if: ${{ inputs.run-before != '' }}
+      if: inputs.run-before != ''
       run: ${{ inputs.run-before }}
 
     - name: Restore NuGet Dependencies
@@ -132,19 +132,19 @@ jobs:
         cat artifacts/tests/coverage/SummaryGithub.md | tail -n +2 >> $GITHUB_STEP_SUMMARY
 
     - name: List Test Results
-      if: ${{ always() }}
+      if: always()
       continue-on-error: true
       run: ls -R1 artifacts/tests
 
     - name: Upload Test Results
-      if: ${{ always() }}
+      if: always()
       uses: actions/upload-artifact@v4
       with:
         name: Tests-${{ runner.os }}-${{ runner.arch }}
         path: artifacts/tests
 
     - name: Pack
-      if: ${{ inputs.pack == 'true' }}
+      if: inputs.pack == 'true'
       run: >
         dotnet pack "${{ inputs.project }}"
         --configuration "Release"
@@ -159,12 +159,12 @@ jobs:
         --output artifacts/packages
 
     - name: List Packages
-      if: ${{ inputs.pack == 'true' }}
+      if: inputs.pack == 'true'
       continue-on-error: true
       run: ls -1 artifacts/packages
 
     - name: Upload Packages
-      if: ${{ inputs.pack == 'true' }}
+      if: inputs.pack == 'true'
       uses: actions/upload-artifact@v4
       with:
         name: Packages

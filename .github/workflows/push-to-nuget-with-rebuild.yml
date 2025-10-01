@@ -46,7 +46,7 @@ jobs:
         fetch-tags: true
 
     - name: Add NuGet Source
-      if: ${{ inputs.nuget_feed != '' }}
+      if: inputs.nuget_feed != ''
       run: >
         dotnet nuget add source
         --username "${{ inputs.nuget_username }}"

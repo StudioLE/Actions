@@ -48,7 +48,7 @@ jobs:
         fetch-tags: true
 
     - name: Add NuGet Source
-      if: ${{ inputs.nuget_feed != '' }}
+      if: inputs.nuget_feed != ''
       shell: bash
       run: >
         dotnet nuget add source
@@ -110,7 +110,7 @@ jobs:
         --version "v${{ steps.set-version.outputs.version }}"
 
     - name: Generate Latest Documentation
-      if: ${{ inputs.latest == 'true' }}
+      if: inputs.latest == 'true'
       working-directory: artifacts
       env:
         LOGGING__LOGLEVEL__DEFAULT: Trace
