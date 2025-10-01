@@ -130,7 +130,7 @@ jobs:
 
   push-cli-linux:
     name: Linux Cli
-    if: ${{ ! contains(steps.set-version.outputs.version, '-') }}
+    if: needs.release.outputs.type == 'release'
     needs:
     - publish-cli-linux
     - release
@@ -143,7 +143,7 @@ jobs:
 
   push-cli-windows:
     name: Windows Cli
-    if: ${{ ! contains(steps.set-version.outputs.version, '-') }}
+    if: needs.release.outputs.type == 'release'
     needs:
     - test-windows
     - publish-cli-windows
