@@ -13,6 +13,14 @@ on:
       nuget_username:
         required: false
         type: string
+      git_user:
+        required: false
+        type: string
+        default: CI/CD
+      git_email:
+        required: false
+        type: string
+        default: cicd.tbxeq@passmail.com
     secrets:
       nuget_password:
         required: false
@@ -79,7 +87,7 @@ jobs:
         Surveyor release-notes > artifacts/RELEASE_NOTES.md
         cat artifacts/RELEASE_NOTES.md
 
-    - name: Create Release
+    - name: GitHub Release
       if: ${{ steps.set-version.outputs.version != '' && ! contains(steps.set-version.outputs.version, '-') }}
       env:
         GH_TOKEN: ${{ github.token }}
@@ -90,17 +98,15 @@ jobs:
         --notes-file artifacts/RELEASE_NOTES.md
         --target ${{ github.ref_name }}
 
-    - name: Create Pre-Release
+    - name: Git Tag
       if: ${{ steps.set-version.outputs.version != '' && contains(steps.set-version.outputs.version, '-') }}
       env:
         GH_TOKEN: ${{ github.token }}
-      run: >
-        gh release create
-        "v${{ steps.set-version.outputs.version }}"
-        --title "v${{ steps.set-version.outputs.version }}"
-        --notes-file artifacts/RELEASE_NOTES.md
-        --target ${{ github.ref_name }}
-        --prerelease
+      run: |
+        git config user.name "${{ inputs.git_user }}"
+        git config user.email "${{ inputs.git_email }}"
+        git tag "v${{ steps.set-version.outputs.version }}"
+        git push origin "v${{ steps.set-version.outputs.version }}"
 
     - name: Determine Environment
       id: set-environment
