@@ -1,7 +1,37 @@
 ﻿name: CI/CD
 
 on:
-  push:
+  workflow_call:
+    inputs:
+      project:
+        required: true
+        type: string
+      cli:
+        required: false
+        type: string
+        default: ""
+      docker_name:
+        required: true
+        type: string
+      documentation_source:
+        required: false
+        type: string
+        default: "*/src/bin/Release/*/StudioLE.*.dll"
+      documentation_section:
+        required: false
+        type: string
+        default: "example"
+    secrets:
+      packages_token:
+        required: true
+      github_token:
+        required: true
+      tests_token:
+        required: true
+      documentation_token:
+        required: true
+      nuget_token:
+        required: true
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -19,7 +49,7 @@ jobs:
       nuget_username: ${{ github.repository_owner }}
       pack: true
     secrets:
-      nuget_password: ${{ secrets.PACKAGES_TOKEN }}
+      nuget_password: ${{ secrets.packages_token }}
 
   test-windows:
     name: Windows
@@ -31,14 +61,14 @@ jobs:
       nuget_feed: https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
       nuget_username: ${{ github.repository_owner }}
     secrets:
-      nuget_password: ${{ secrets.PACKAGES_TOKEN }}
+      nuget_password: ${{ secrets.packages_token }}
 
   publish-cli-linux:
     name: Linux CLI
-    if: github.ref_type == 'branch' && contains(fromJSON('["main", "alpha", "beta", "release"]'), github.ref_name)
+    if: github.ref_type == 'branch' && contains(fromJSON('["main", "alpha", "beta", "release"]'), github.ref_name) && inputs.cli != ''
     uses: StudioLE/Actions/.github/workflows/dotnet-publish.yml@v7
     with:
-      project: StudioLE.Example.Cli/src/StudioLE.Example.Cli.csproj
+      project: ${{ inputs.project }}
       runtime: linux-x64
       npm: ""
       workload: ""
@@ -52,14 +82,14 @@ jobs:
       nuget_feed: https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
       nuget_username: ${{ github.repository_owner }}
     secrets:
-      nuget_password: ${{ secrets.PACKAGES_TOKEN }}
+      nuget_password: ${{ secrets.packages_token }}
 
   publish-cli-windows:
     name: Windows CLI
-    if: github.ref_type == 'branch' && contains(fromJSON('["main", "alpha", "beta", "release"]'), github.ref_name)
+    if: github.ref_type == 'branch' && contains(fromJSON('["main", "alpha", "beta", "release"]'), github.ref_name) && inputs.cli != ''
     uses: StudioLE/Actions/.github/workflows/dotnet-publish.yml@v7
     with:
-      project: StudioLE.Example.Cli/src/StudioLE.Example.Cli.csproj
+      project: ${{ inputs.project }}
       runtime: win-x64
       npm: ""
       workload: ""
@@ -73,7 +103,7 @@ jobs:
       nuget_feed: https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
       nuget_username: ${{ github.repository_owner }}
     secrets:
-      nuget_password: ${{ secrets.PACKAGES_TOKEN }}
+      nuget_password: ${{ secrets.packages_token }}
 
   documentation:
     name: Documentation
@@ -85,10 +115,10 @@ jobs:
       nuget_feed: https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
       nuget_username: ${{ github.repository_owner }}
       latest: ${{ github.ref_type == 'branch' && github.ref_name == 'release' }}
-      source: "*/src/bin/Release/*/StudioLE.*.dll"
-      section: "example"
+      source: ${{ inputs.documentation_source }}
+      section: ${{ inputs.documentation_section }}
     secrets:
-      nuget_password: ${{ secrets.PACKAGES_TOKEN }}
+      nuget_password: ${{ secrets.packages_token }}
 
   release:
     name: Release
@@ -100,17 +130,17 @@ jobs:
       nuget_feed: https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
       nuget_username: ${{ github.repository_owner }}
     secrets:
-      nuget_password: ${{ secrets.PACKAGES_TOKEN }}
+      nuget_password: ${{ secrets.packages_token }}
 
   docker-build:
     name: Docker Build
-    if: github.ref_type == 'branch' && contains(fromJSON('["main", "alpha", "beta", "release"]'), github.ref_name)
+    if: github.ref_type == 'branch' && contains(fromJSON('["main", "alpha", "beta", "release"]'), github.ref_name) && inputs.cli != ''
     uses: StudioLE/Actions/.github/workflows/docker-build.yml@v7
     with:
-      name: example
+      name: ${{ inputs.docker_name }}
       user: studiole
     secrets:
-      password: ${{ secrets.GITHUB_TOKEN }}
+      password: ${{ secrets.github_token }}
 
   docker-push-prerelease:
     name: Prerelease
@@ -120,12 +150,12 @@ jobs:
     - release
     uses: StudioLE/Actions/.github/workflows/docker-push.yml@v7
     with:
-      name: example
+      name: ${{ inputs.docker_name }}
       user: studiole
       version: ${{ needs.release.outputs.version }}
       tag: alpha
     secrets:
-      password: ${{ secrets.GITHUB_TOKEN }}
+      password: ${{ secrets.github_token }}
 
   docker-push-release:
     name: Release
@@ -135,12 +165,12 @@ jobs:
     - release
     uses: StudioLE/Actions/.github/workflows/docker-push.yml@v7
     with:
-      name: example
+      name: ${{ inputs.docker_name }}
       user: studiole
       version: ${{ needs.release.outputs.version }}
       tag: latest
     secrets:
-      password: ${{ secrets.GITHUB_TOKEN }}
+      password: ${{ secrets.github_token }}
 
   push-tests:
     name: Test Results
@@ -155,7 +185,7 @@ jobs:
       path: "${{ github.repository }}/${{ github.run_id }}"
       message: "feat(${{ github.repository }}): Added test results for ${{ github.sha }}"
     secrets:
-      repo_token: ${{ secrets.TESTS_TOKEN }}
+      repo_token: ${{ secrets.tests_token }}
 
   push-packages:
     name: GitHub
@@ -166,7 +196,7 @@ jobs:
       nuget_feed: https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
       nuget_username: ${{ github.repository_owner }}
     secrets:
-      nuget_password: ${{ secrets.GITHUB_TOKEN }}
+      nuget_password: ${{ secrets.github_token }}
 
   push-nuget:
     name: NuGet
@@ -178,7 +208,7 @@ jobs:
       nuget_feed: https://api.nuget.org/v3/index.json
       nuget_username: ""
     secrets:
-      nuget_password: ${{ secrets.NUGET_TOKEN }}
+      nuget_password: ${{ secrets.nuget_token }}
 
   push-cli-linux:
     name: Linux Cli
@@ -189,7 +219,7 @@ jobs:
     uses: StudioLE/Actions/.github/workflows/push-to-github-releases.yml@v7
     with:
       artifact: Cli-Linux
-      name: StudioLE.Example.Cli-linux-x64-v${{ needs.release.outputs.version }}
+      name: ${{ inputs.cli }}-linux-x64-v${{ needs.release.outputs.version }}
       file: true
       version: ${{ needs.release.outputs.version }}
 
@@ -203,7 +233,7 @@ jobs:
     uses: StudioLE/Actions/.github/workflows/push-to-github-releases.yml@v7
     with:
       artifact: Cli-Windows
-      name: StudioLE.Example.Cli-win-x64-v${{ needs.release.outputs.version }}.exe
+      name: ${{ inputs.cli }}-win-x64-v${{ needs.release.outputs.version }}.exe
       file: true
       version: ${{ needs.release.outputs.version }}
 
@@ -218,9 +248,9 @@ jobs:
       repo: StudioLE/Documentation
       artifact: Documentation
       path: ""
-      message: "feat(example): Added documentation for v${{ needs.release.outputs.version }}"
+      message: "feat(${{ inputs.documentation_section }}): Added documentation for v${{ needs.release.outputs.version }}"
     secrets:
-      repo_token: ${{ secrets.DOCUMENTATION_TOKEN }}
+      repo_token: ${{ secrets.documentation_token }}
 
   environment:
     name: Environment

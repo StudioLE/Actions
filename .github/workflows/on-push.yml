@@ -1,0 +1,25 @@
+name: CI/CD
+
+on:
+  push:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+
+  ci-cd:
+    name: CI/CD
+    uses: StudioLE/Actions/.github/workflows/ci-cd.yml@v7
+    with:
+      project: StudioLE.Example.Cli/src/StudioLE.Example.Cli.csproj
+      cli: StudioLE.Example
+      docker_name: example
+      documentation_section: example
+    secrets:
+      documentation_token: ${{ secrets.DOCUMENTATION_TOKEN }}
+      github_token: ${{ secrets.GITHUB_TOKEN }}
+      nuget_token: ${{ secrets.NUGET_TOKEN }}
+      packages_token: ${{ secrets.PACKAGES_TOKEN }}
+      tests_token: ${{ secrets.TESTS_TOKEN }}
