@@ -24,7 +24,7 @@ on:
     secrets:
       packages_token:
         required: true
-      github_token:
+      gh_token:
         required: true
       tests_token:
         required: true
@@ -140,7 +140,7 @@ jobs:
       name: ${{ inputs.docker_name }}
       user: studiole
     secrets:
-      password: ${{ secrets.github_token }}
+      password: ${{ secrets.gh_token }}
 
   docker-push-prerelease:
     name: Prerelease
@@ -155,7 +155,7 @@ jobs:
       version: ${{ needs.release.outputs.version }}
       tag: alpha
     secrets:
-      password: ${{ secrets.github_token }}
+      password: ${{ secrets.gh_token }}
 
   docker-push-release:
     name: Release
@@ -170,7 +170,7 @@ jobs:
       version: ${{ needs.release.outputs.version }}
       tag: latest
     secrets:
-      password: ${{ secrets.github_token }}
+      password: ${{ secrets.gh_token }}
 
   push-tests:
     name: Test Results
@@ -196,7 +196,7 @@ jobs:
       nuget_feed: https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
       nuget_username: ${{ github.repository_owner }}
     secrets:
-      nuget_password: ${{ secrets.github_token }}
+      nuget_password: ${{ secrets.gh_token }}
 
   push-nuget:
     name: NuGet
