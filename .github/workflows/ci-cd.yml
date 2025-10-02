@@ -24,9 +24,8 @@ on:
         type: string
         default: "*/src/bin/Release/*/StudioLE.*.dll"
       documentation_section:
-        required: false
+        required: true
         type: string
-        default: "example"
     secrets:
       packages_token:
         required: true
