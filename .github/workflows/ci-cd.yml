@@ -10,6 +10,10 @@ on:
         required: false
         type: string
         default: ""
+      cli_file:
+        required: false
+        type: string
+        default: true
       docker_name:
         required: true
         type: string
@@ -216,7 +220,7 @@ jobs:
     with:
       artifact: Cli-Linux
       name: ${{ inputs.cli }}-linux-x64-v${{ needs.release.outputs.version }}
-      file: true
+      file: ${{ inputs.cli_file }}
       version: ${{ needs.release.outputs.version }}
 
   push-cli-windows:
@@ -230,7 +234,7 @@ jobs:
     with:
       artifact: Cli-Windows
       name: ${{ inputs.cli }}-win-x64-v${{ needs.release.outputs.version }}.exe
-      file: true
+      file: ${{ inputs.cli_file }}
       version: ${{ needs.release.outputs.version }}
 
   push-documentation:
