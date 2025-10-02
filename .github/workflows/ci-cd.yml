@@ -104,6 +104,7 @@ jobs:
 
   docker-build:
     name: Docker Build
+    if: github.ref_type == 'branch' && contains(fromJSON('["main", "alpha", "beta", "release"]'), github.ref_name)
     uses: StudioLE/Actions/.github/workflows/docker-build.yml@v7
     with:
       name: example
@@ -112,7 +113,7 @@ jobs:
       password: ${{ secrets.GITHUB_TOKEN }}
 
   docker-push-prerelease:
-    name: Docker Push Prerelease
+    name: Prerelease
     if: needs.release.outputs.type == 'prerelease'
     needs:
     - docker-build
@@ -126,7 +127,7 @@ jobs:
       password: ${{ secrets.GITHUB_TOKEN }}
 
   docker-push-release:
-    name: Docker Push Release
+    name: Release
     if: needs.release.outputs.type == 'release'
     needs:
     - docker-build
@@ -156,7 +157,7 @@ jobs:
       repo_token: ${{ secrets.TESTS_TOKEN }}
 
   push-packages:
-    name: GitHub
+    name: Packages
     needs:
     - release
     uses: StudioLE/Actions/.github/workflows/push-to-nuget.yml@v7
