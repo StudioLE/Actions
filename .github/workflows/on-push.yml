@@ -19,7 +19,7 @@ jobs:
       documentation_section: example
     secrets:
       documentation_token: ${{ secrets.DOCUMENTATION_TOKEN }}
-      github_token: ${{ secrets.GITHUB_TOKEN }}
+      gh_token: ${{ secrets.GITHUB_TOKEN }}
       nuget_token: ${{ secrets.NUGET_TOKEN }}
       packages_token: ${{ secrets.PACKAGES_TOKEN }}
       tests_token: ${{ secrets.TESTS_TOKEN }}
