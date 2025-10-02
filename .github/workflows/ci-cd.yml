@@ -158,7 +158,7 @@ jobs:
       repo_token: ${{ secrets.TESTS_TOKEN }}
 
   push-packages:
-    name: Packages
+    name: GitHub
     needs:
     - release
     uses: StudioLE/Actions/.github/workflows/push-to-nuget.yml@v7
