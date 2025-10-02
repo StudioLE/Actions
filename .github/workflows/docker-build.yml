@@ -25,6 +25,7 @@ on:
 jobs:
 
   docker-build:
+    name: Docker Build
     runs-on: ${{ inputs.os }}
     steps:
 

@@ -1,4 +1,4 @@
-name: Push
+name: Push Packages
 
 on:
   workflow_call:
@@ -20,7 +20,7 @@ on:
 jobs:
 
   push:
-    name: Push
+    name: Push Packages
     runs-on: ${{ inputs.os }}
     env:
       DOTNET_CLI_TELEMETRY_OPTOUT: true
