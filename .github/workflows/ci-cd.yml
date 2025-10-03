@@ -24,7 +24,7 @@ on:
         type: string
         default: "*/src/bin/Release/*/StudioLE.*.dll"
       documentation_section:
-        required: true
+        required: false
         type: string
     secrets:
       packages_token:
@@ -115,7 +115,7 @@ jobs:
 
   documentation:
     name: Documentation
-    if: github.ref_type == 'branch' && contains(fromJSON('["main", "alpha", "beta", "release"]'), github.ref_name)
+    if: github.ref_type == 'branch' && contains(fromJSON('["main", "alpha", "beta", "release"]'), github.ref_name) && inputs.documentation_section != ''
     uses: StudioLE/Actions/.github/workflows/illuminate-generate.yml@v7
     with:
       project: ""
