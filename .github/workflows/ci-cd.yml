@@ -3,11 +3,11 @@
 on:
   workflow_call:
     inputs:
-      project:
+      cli_name:
         required: false
         type: string
         default: ""
-      cli:
+      cli_project:
         required: false
         type: string
         default: ""
@@ -37,6 +37,13 @@ on:
         required: true
       nuget_token:
         required: true
+    outputs:
+      version:
+        value: ${{ jobs.release.outputs.version }}
+      environment:
+        value: ${{ jobs.release.outputs.environment }}
+      type:
+        value:  ${{ jobs.release.outputs.type }}
 
 jobs:
 
@@ -66,10 +73,10 @@ jobs:
 
   publish-cli-linux:
     name: Linux CLI
-    if: github.ref_type == 'branch' && contains(fromJSON('["main", "alpha", "beta", "release"]'), github.ref_name) && inputs.cli != ''
+    if: github.ref_type == 'branch' && contains(fromJSON('["main", "alpha", "beta", "release"]'), github.ref_name) && inputs.cli_name != ''
     uses: StudioLE/Actions/.github/workflows/dotnet-publish.yml@v7
     with:
-      project: ${{ inputs.project }}
+      project: ${{ inputs.cli_project }}
       runtime: linux-x64
       npm: ""
       workload: ""
@@ -87,10 +94,10 @@ jobs:
 
   publish-cli-windows:
     name: Windows CLI
-    if: github.ref_type == 'branch' && contains(fromJSON('["main", "alpha", "beta", "release"]'), github.ref_name) && inputs.cli != ''
+    if: github.ref_type == 'branch' && contains(fromJSON('["main", "alpha", "beta", "release"]'), github.ref_name) && inputs.cli_name != ''
     uses: StudioLE/Actions/.github/workflows/dotnet-publish.yml@v7
     with:
-      project: ${{ inputs.project }}
+      project: ${{ inputs.cli_project }}
       runtime: win-x64
       npm: ""
       workload: ""
@@ -220,7 +227,7 @@ jobs:
     uses: StudioLE/Actions/.github/workflows/push-to-github-releases.yml@v7
     with:
       artifact: Cli-Linux
-      name: ${{ inputs.cli }}-linux-x64-v${{ needs.release.outputs.version }}
+      name: ${{ inputs.cli_name }}-linux-x64-v${{ needs.release.outputs.version }}
       file: ${{ inputs.cli_file }}
       version: ${{ needs.release.outputs.version }}
 
@@ -234,7 +241,7 @@ jobs:
     uses: StudioLE/Actions/.github/workflows/push-to-github-releases.yml@v7
     with:
       artifact: Cli-Windows
-      name: ${{ inputs.cli }}-win-x64-v${{ needs.release.outputs.version }}.exe
+      name: ${{ inputs.cli_name }}-win-x64-v${{ needs.release.outputs.version }}.exe
       file: ${{ inputs.cli_file }}
       version: ${{ needs.release.outputs.version }}
 
