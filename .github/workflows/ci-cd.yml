@@ -205,6 +205,22 @@ jobs:
     secrets:
       repo_token: ${{ secrets.tests_token }}
 
+  push-tests-windows:
+    name: Test Results
+    if: always()
+    needs:
+    - push-tests
+    - test-windows
+    uses: StudioLE/Actions/.github/workflows/push-to-repo.yml@v7
+    with:
+      repo: StudioLE/Tests
+      artifact: Tests-Windows-X64
+      rm: ""
+      path: "${{ github.repository }}/${{ github.run_id }}/windows"
+      message: "feat(${{ github.repository }}): Added windows test results for ${{ github.sha }}"
+    secrets:
+      repo_token: ${{ secrets.tests_token }}
+
   push-packages:
     name: GitHub
     needs:
