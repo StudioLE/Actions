@@ -3,6 +3,14 @@
 on:
   workflow_call:
     inputs:
+      before_test_linux:
+        required: false
+        type: string
+        default: ""
+      before_test_windows:
+        required: false
+        type: string
+        default: ""
       cli_name:
         required: false
         type: string
@@ -53,6 +61,7 @@ jobs:
     with:
       project: ""
       os: ubuntu-latest
+      run-before: ${{ inputs.before_test_linux }}
       nuget_feed: https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
       nuget_username: ${{ github.repository_owner }}
       pack: true
@@ -66,6 +75,7 @@ jobs:
     with:
       project: ""
       os: windows-latest
+      run-before: ${{ inputs.before_test_windows }}
       nuget_feed: https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
       nuget_username: ${{ github.repository_owner }}
     secrets:
