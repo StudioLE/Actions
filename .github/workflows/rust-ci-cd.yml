@@ -1,0 +1,97 @@
+name: CI/CD
+
+on:
+  workflow_call:
+    inputs:
+      dioxus_name:
+        required: false
+        type: string
+        default: ""
+      dioxus_path:
+        required: false
+        type: string
+        default: ""
+      dioxus_artifact:
+        required: false
+        type: string
+        default: WebAssembly
+      dioxus_repo:
+        required: false
+        type: string
+        default: WebAssembly
+    secrets:
+      dioxus_repo_token:
+        required: true
+    outputs:
+      version:
+        value: ${{ jobs.surveyor.outputs.version }}
+      environment:
+        value: ${{ jobs.surveyor.outputs.environment }}
+      type:
+        value: ${{ jobs.surveyor.outputs.type }}
+
+jobs:
+
+  surveyor:
+    name: Surveyor
+    uses: StudioLE/Actions/.github/workflows/rust-surveyor.yml@rust
+
+  dioxus-build:
+    name: Dioxus Build
+    uses: StudioLE/Actions/.github/workflows/dioxus-build.yml@rust
+    needs:
+    - surveyor
+    with:
+      package_name: ${{ inputs.dioxus_name }}
+      package_path: ${{ inputs.dioxus_path }}
+      version: ${{ needs.surveyor.outputs.version }}
+      artifact_name: ${{ inputs.dioxus_artifact }}
+
+  git-tag:
+    name: Tag
+    if: needs.surveyor.outputs.type == 'prerelease'
+    uses: StudioLE/Actions/.github/workflows/git-tag.yml@rust
+    needs:
+    - surveyor
+    - dioxus-build
+    with:
+      version: ${{ needs.surveyor.outputs.version }}
+
+  github-release:
+    name: Release
+    if: needs.surveyor.outputs.type == 'release'
+    uses: StudioLE/Actions/.github/workflows/github-release.yml@rust
+    needs:
+    - surveyor
+    - dioxus-build
+    with:
+      type: ${{ needs.surveyor.outputs.type }}
+      version: ${{ needs.surveyor.outputs.version }}
+
+  dioxus-push:
+    name: Push Dioxus
+    if: needs.surveyor.outputs.type == 'release' && inputs.dioxus_repo != ''
+    uses: StudioLE/Actions/.github/workflows/push-to-repo.yml@v7
+    needs:
+    - surveyor
+    - dioxus-build
+    with:
+      repo: ${{ inputs.dioxus_repo }}
+      artifact: ${{ inputs.dioxus_artifact }}
+      rm: latest
+      path: latest
+      message: "feat: Added ${{ needs.surveyor.outputs.version }} WebAssembly build"
+    secrets:
+      repo_token: ${{ secrets.dioxus_repo_token }}
+
+  environment:
+    name: Environment
+    if: needs.surveyor.outputs.environment != ''
+    needs:
+    - surveyor
+    - dioxus-build
+    runs-on: ubuntu-latest
+    environment: ${{ needs.surveyor.outputs.environment }}
+    steps:
+    - run: |
+        echo "Environment: ${{ needs.surveyor.outputs.environment }}"

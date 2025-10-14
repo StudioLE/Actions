@@ -1,0 +1,43 @@
+name: Git Tag
+
+on:
+  workflow_call:
+    inputs:
+      os:
+        required: false
+        type: string
+        default: ubuntu-latest
+      version:
+        required: true
+        type: string
+      git_user:
+        required: false
+        type: string
+        default: CI/CD
+      git_email:
+        required: false
+        type: string
+        default: cicd.tbxeq@passmail.com
+
+jobs:
+
+  git-tag:
+    name: Git Tag
+    runs-on: ${{ inputs.os }}
+    steps:
+
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        fetch-tags: true
+
+    - name: git config
+      run: |
+        git config user.name "${{ inputs.git_user }}"
+        git config user.email "${{ inputs.git_email }}"
+
+    - name: git tag
+      run: git tag "v${{ inputs.version }}"
+
+    - name: git push
+      run: git push origin "v${{ inputs.version }}"

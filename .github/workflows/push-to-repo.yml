@@ -24,6 +24,10 @@ on:
       path:
         required: true
         type: string
+      copy:
+        required: false
+        type: string
+        default: ''
       message:
         required: false
         type: string
@@ -69,7 +73,11 @@ jobs:
         path: ${{ inputs.path }}
 
     - name: List
-      run: ls -R1 ${{ inputs.path }}
+      run: ls -R1 "${{ inputs.path }}"
+
+    - name: Copy
+      if: inputs.copy != ''
+      run: cp -r "${{ inputs.path }}" "${{ inputs.copy }}"
 
     - name: Commit
       run: |

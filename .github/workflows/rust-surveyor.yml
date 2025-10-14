@@ -1,0 +1,161 @@
+name: Release
+
+on:
+  workflow_call:
+    inputs:
+      os:
+        required: false
+        type: string
+        default: ubuntu-latest
+      nuget_feed:
+        required: false
+        type: string
+      nuget_username:
+        required: false
+        type: string
+      git_user:
+        required: false
+        type: string
+        default: CI/CD
+      git_email:
+        required: false
+        type: string
+        default: cicd.tbxeq@passmail.com
+      notes_artifact:
+        required: false
+        type: string
+        default: release-notes.md
+      notes_file:
+        required: false
+        type: string
+        default: release-notes.md
+    secrets:
+      nuget_password:
+        required: false
+    outputs:
+      version:
+        value: ${{ jobs.version.outputs.version }}
+      environment:
+        value: ${{ jobs.version.outputs.environment }}
+      type:
+        value:  ${{ jobs.version.outputs.type }}
+
+jobs:
+
+  version:
+    name: Version
+    runs-on: ${{ inputs.os }}
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: true
+      NUGET_CERT_REVOCATION_MODE: offline
+      DOTNET_NUGET_SIGNATURE_VERIFICATION: false
+    outputs:
+      version: ${{ steps.set-version.outputs.version }}
+      environment: ${{ steps.set-environment.outputs.environment }}
+      type: ${{ steps.set-type.outputs.type }}
+    steps:
+
+    - name: Checkout Repo
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        fetch-tags: true
+
+    - name: Add NuGet Source
+      if: inputs.nuget_feed != ''
+      shell: bash
+      run: >
+        dotnet nuget add source
+        --username "${{ inputs.nuget_username }}"
+        --password "${{ secrets.nuget_password }}"
+        --store-password-in-clear-text
+        "${{ inputs.nuget_feed }}"
+
+    - name: Install Surveyor
+      run: dotnet tool install --global Surveyor
+
+    - name: Determine Version
+      id: set-version
+      env:
+        LOGGING__LOGLEVEL__DEFAULT: Trace
+      run: |
+        LATEST_VERSION=$(Surveyor version)
+        echo "LATEST_VERSION: ${LATEST_VERSION}"
+
+        if [[ "${LATEST_VERSION}" == "" ]]
+        then
+          echo "version=" >> $GITHUB_OUTPUT
+        else
+          echo "version=${LATEST_VERSION}" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Determine Type
+      id: set-type
+      run: |
+        if [[ "${{ steps.set-version.outputs.version }}" == *"-"* ]]
+        then
+          echo "type=prerelease" >> $GITHUB_OUTPUT
+        elif [[ -n "${{ steps.set-version.outputs.version }}" ]]
+        then
+          echo "type=release" >> $GITHUB_OUTPUT
+        else
+          echo "type=" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Create Release Notes
+      if: steps.set-version.outputs.version != ''
+      env:
+        LOGGING__LOGLEVEL__DEFAULT: Trace
+      run: |
+        mkdir artifacts
+        Surveyor release-notes > artifacts/${{ inputs.notes_file }}
+        cat artifacts/${{ inputs.notes_file }}
+
+    - name: Upload Release Notes
+      if: steps.set-version.outputs.version != ''
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ inputs.notes_artifact }}
+        path: artifacts/${{ inputs.notes_file }}
+
+    - name: Install cargo-edit
+      if: steps.set-version.outputs.version != ''
+      run: /home/linuxbrew/.linuxbrew/bin/brew install cargo-edit
+
+    - name: Set Version
+      if: steps.set-version.outputs.version != ''
+      run: /home/linuxbrew/.linuxbrew/bin/cargo-set-version set-version ${{ steps.surveyor.outputs.version }}
+
+    - name: Git Diff
+      run: git --no-pager diff --color
+
+    - name: Upload Cargo.toml
+      uses: actions/upload-artifact@v4
+      with:
+        name: Cargo.toml
+        path: Cargo.toml
+
+    - name: Determine Environment
+      id: set-environment
+      run: |
+        if [[ "${{ github.ref_name }}" == "main" ]]
+        then
+          echo "environment=Development" >> $GITHUB_OUTPUT
+        elif [[ "${{ github.ref_name }}" == "alpha" ]]
+        then
+          echo "environment=Development" >> $GITHUB_OUTPUT
+        elif [[ "${{ github.ref_name }}" == "beta" ]]
+        then
+          echo "environment=Staging" >> $GITHUB_OUTPUT
+        elif [[ "${{ github.ref_name }}" == "release" ]]
+        then
+          echo "environment=Production" >> $GITHUB_OUTPUT
+        else
+          echo "environment=" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Read
+      run: |
+        echo "Version: ${{ steps.set-version.outputs.version }}"
+        echo "Environment: ${{ steps.set-environment.outputs.environment }}"
+        echo "Type: ${{ steps.set-type.outputs.type }}"
