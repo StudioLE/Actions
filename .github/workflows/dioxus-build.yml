@@ -1,0 +1,163 @@
+name: Dioxus Build
+
+on:
+  workflow_call:
+    inputs:
+      os:
+        required: false
+        type: string
+        default: ubuntu-latest
+      package_name:
+        required: true
+        type: string
+      package_path:
+        required: false
+        type: string
+        default: ''
+      artifact_name:
+        required: false
+        type: string
+        default: WebAssembly
+      version:
+        required: true
+        type: string
+      git_user:
+        required: false
+        type: string
+        default: CI/CD
+      git_email:
+        required: false
+        type: string
+        default: cicd.tbxeq@passmail.com
+
+jobs:
+  
+  build:
+    name: Dioxus Build
+    runs-on: ${{ inputs.os }}
+    steps:
+
+    - name: Change Directory
+      if: inputs.package_path != ''
+      run: cd "${{ inputs.package_path }}"
+  
+    - name: Fetch dependencies
+      run: sudo apt-get update
+  
+    - name: Install dependencies
+      run: >
+        sudo apt-get install --yes
+        libwebkit2gtk-4.1-dev
+        build-essential
+        curl
+        wget
+        file
+        libxdo-dev
+        libssl-dev
+        libayatana-appindicator3-dev
+        librsvg2-dev
+  
+    - name: Checkout Repo
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        fetch-tags: true
+  
+    - name: Restore Cargo
+      id: restore
+      uses: actions/cache/restore@v4
+      with:
+        key: dioxus-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}-${{ inputs.version }}
+        restore-keys: |
+          dioxus-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}-
+          dioxus-${{ runner.os }}-
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+          target/
+  
+    - name: Download Cargo.toml
+      uses: actions/download-artifact@v4
+      with:
+        name: Cargo.toml
+  
+    - name: WASM target
+      run: rustup target add wasm32-unknown-unknown
+  
+    - name: Install Cargo BInstall
+      run: /home/linuxbrew/.linuxbrew/bin/brew install cargo-binstall
+  
+    - name: Install Dioxus CLI
+      run: /home/linuxbrew/.linuxbrew/bin/cargo-binstall dioxus-cli
+  
+    - name: NPM Install
+      run: npm install
+  
+    - name: Bundle for Web
+      run: dx bundle --platform web
+  
+    - name: Cache Cargo
+      if: always()
+      uses: actions/cache/save@v4
+      with:
+        key: ${{ steps.restore.outputs.cache-primary-key }}
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+          target/
+  
+    - name: Git Config
+      run: |
+        git config user.name "${{ inputs.git_user }}"
+        git config user.email "${{ inputs.git_email }}"
+  
+    - name: Cargo Format
+      run: |
+        cargo fmt
+        git add --all -- ':!Cargo.toml' ':!Cargo.lock'
+        if ! git diff --cached --exit-code
+        then
+          echo "::warning title=Cargo Format::Please review the output for details."
+          git commit -m "style: Apply code style with \`cargo fmt\`"
+        fi
+      continue-on-error: true
+  
+    - name: Cargo Fix
+      run: |
+        cargo fix --release --allow-dirty --all-targets --message-format short
+        cargo fmt
+        git add --all -- ':!Cargo.toml' ':!Cargo.lock'
+        if ! git diff --cached --exit-code
+        then
+          echo "::warning title=Cargo Fix::Please review the output for details."
+          git commit -m "style: Apply code style with \`cargo fix\`"
+        fi
+      continue-on-error: true
+  
+    - name: Cargo Clippy
+      run: |
+        cargo clippy --release --fix --allow-dirty --all-targets --message-format short
+        cargo fmt
+        git add --all -- ':!Cargo.toml' ':!Cargo.lock'
+        if ! git diff --cached --exit-code
+        then
+          echo "::warning title=Cargo Clippy::Please review the output for details."
+          git commit -m "style: Apply code style with \`cargo clippy --fix\`"
+        fi
+      continue-on-error: true
+  
+    - name: Git Status
+      run: git status
+  
+    - name: Git Push
+      run: git push
+  
+    - name: Upload WebAssembly
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ inputs.artifact_name }}
+        path: target/dx/${{ inputs.package_name }}/release/web/public
