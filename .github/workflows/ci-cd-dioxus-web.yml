@@ -3,24 +3,24 @@ name: CI/CD
 on:
   workflow_call:
     inputs:
-      dioxus_name:
+      dioxus_web_name:
         required: false
         type: string
         default: ""
-      dioxus_path:
+      dioxus_web_path:
         required: false
         type: string
         default: ""
-      dioxus_artifact:
+      dioxus_web_artifact:
         required: false
         type: string
         default: WebAssembly
-      dioxus_repo:
+      dioxus_web_repo:
         required: false
         type: string
         default: WebAssembly
     secrets:
-      dioxus_repo_token:
+      dioxus_web_repo_token:
         required: true
     outputs:
       version:
@@ -36,16 +36,16 @@ jobs:
     name: Surveyor
     uses: StudioLE/Actions/.github/workflows/rust-surveyor.yml@v7
 
-  dioxus-build:
+  dioxus-build-web:
     name: Dioxus Build
-    uses: StudioLE/Actions/.github/workflows/dioxus-build.yml@v7
+    uses: StudioLE/Actions/.github/workflows/dioxus-build-web.yml@v7
     needs:
     - surveyor
     with:
-      package_name: ${{ inputs.dioxus_name }}
-      package_path: ${{ inputs.dioxus_path }}
+      package_name: ${{ inputs.dioxus_web_name }}
+      package_path: ${{ inputs.dioxus_web_path }}
       version: ${{ needs.surveyor.outputs.version }}
-      artifact_name: ${{ inputs.dioxus_artifact }}
+      artifact_name: ${{ inputs.dioxus_web_artifact }}
 
   git-tag:
     name: Tag
@@ -53,7 +53,7 @@ jobs:
     uses: StudioLE/Actions/.github/workflows/git-tag.yml@v7
     needs:
     - surveyor
-    - dioxus-build
+    - dioxus-build-web
     with:
       version: ${{ needs.surveyor.outputs.version }}
 
@@ -63,34 +63,34 @@ jobs:
     uses: StudioLE/Actions/.github/workflows/github-release.yml@v7
     needs:
     - surveyor
-    - dioxus-build
+    - dioxus-build-web
     with:
       type: ${{ needs.surveyor.outputs.type }}
       version: ${{ needs.surveyor.outputs.version }}
 
   dioxus-push:
     name: Push Dioxus
-    if: needs.surveyor.outputs.type == 'release' && inputs.dioxus_repo != ''
+    if: needs.surveyor.outputs.type == 'release' && inputs.dioxus_web_repo != ''
     uses: StudioLE/Actions/.github/workflows/push-to-repo.yml@v7
     needs:
     - surveyor
-    - dioxus-build
+    - dioxus-build-web
     with:
-      repo: ${{ inputs.dioxus_repo }}
-      artifact: ${{ inputs.dioxus_artifact }}
+      repo: ${{ inputs.dioxus_web_repo }}
+      artifact: ${{ inputs.dioxus_web_artifact }}
       rm: latest
       path: latest
       copy: v${{ needs.surveyor.outputs.version }}
       message: "feat: Added ${{ needs.surveyor.outputs.version }} WebAssembly build"
     secrets:
-      repo_token: ${{ secrets.dioxus_repo_token }}
+      repo_token: ${{ secrets.dioxus_web_repo_token }}
 
   environment:
     name: Environment
     if: needs.surveyor.outputs.environment != ''
     needs:
     - surveyor
-    - dioxus-build
+    - dioxus-build-web
     runs-on: ubuntu-latest
     environment: ${{ needs.surveyor.outputs.environment }}
     steps:

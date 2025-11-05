@@ -22,6 +22,9 @@ on:
         required: false
         type: string
         default: release-notes.md
+      binary_name:
+        required: false
+        type: string
 
 jobs:
 
@@ -32,7 +35,8 @@ jobs:
 
     - uses: actions/checkout@v4
 
-    - uses: actions/download-artifact@v4
+    - name: Download release notes
+      uses: actions/download-artifact@v4
       with:
         name: ${{ inputs.notes_artifact }}
 
@@ -58,3 +62,24 @@ jobs:
         --notes-file "${{ inputs.notes_file }}"
         --target ${{ github.ref_name }}
         --prerelease
+
+    - name: Remove release notes
+      run: rm -f "${{ inputs.notes_artifact }}"
+
+    - name: Download binaries
+      if: inputs.binary_name != ''
+      uses: actions/download-artifact@v4
+      with:
+        pattern: ${{ inputs.binary_name }}-${{ inputs.version }}-*
+        merge-multiple: true
+
+    - name: Upload release assets
+      if: inputs.binary_name != ''
+      run: >
+        gh release upload
+        "v${{ inputs.version }}"
+        "${{ inputs.binary_name }}-${{ inputs.version }}-"*
+        --clobber
+        --repo "${{ github.repository }}"
+      env:
+        GH_TOKEN: ${{ github.token }}
