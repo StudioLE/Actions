@@ -108,7 +108,7 @@ jobs:
     - name: Create artifacts directory
       id: artifact
       run: |
-        ARTIFACT="${{ inputs.binary_name }}-${{ inputs.verson }}-${{ matrix.target }}"
+        ARTIFACT="${{ inputs.binary_name }}-${{ inputs.version }}-${{ matrix.target }}"
         mkdir "${ARTIFACT}"
         echo "name=${ARTIFACT}" >> $GITHUB_OUTPUT
 
