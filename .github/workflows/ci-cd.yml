@@ -51,7 +51,7 @@ on:
       environment:
         value: ${{ jobs.release.outputs.environment }}
       type:
-        value:  ${{ jobs.release.outputs.type }}
+        value: ${{ jobs.release.outputs.type }}
 
 jobs:
 

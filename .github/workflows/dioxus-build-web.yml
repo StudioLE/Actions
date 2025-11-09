@@ -31,7 +31,7 @@ on:
         default: cicd.tbxeq@passmail.com
 
 jobs:
-  
+
   build:
     name: Dioxus Build
     runs-on: ${{ inputs.os }}
@@ -40,10 +40,10 @@ jobs:
     - name: Change Directory
       if: inputs.package_path != ''
       run: cd "${{ inputs.package_path }}"
-  
+
     - name: Fetch dependencies
       run: sudo apt-get update
-  
+
     - name: Install dependencies
       run: >
         sudo apt-get install --yes
@@ -56,13 +56,13 @@ jobs:
         libssl-dev
         libayatana-appindicator3-dev
         librsvg2-dev
-  
+
     - name: Checkout Repo
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
         fetch-tags: true
-  
+
     - name: Restore Cargo
       id: restore
       uses: actions/cache/restore@v4
@@ -77,27 +77,27 @@ jobs:
           ~/.cargo/registry/cache/
           ~/.cargo/git/db/
           target/
-  
+
     - name: Download Cargo.toml
       uses: actions/download-artifact@v4
       with:
         name: Cargo.toml
-  
+
     - name: WASM target
       run: rustup target add wasm32-unknown-unknown
-  
+
     - name: Install Cargo BInstall
       run: /home/linuxbrew/.linuxbrew/bin/brew install cargo-binstall
-  
+
     - name: Install Dioxus CLI
       run: /home/linuxbrew/.linuxbrew/bin/cargo-binstall dioxus-cli
-  
+
     - name: NPM Install
       run: npm install
-  
+
     - name: Bundle for Web
       run: dx bundle --platform web
-  
+
     - name: Cache Cargo
       if: always()
       uses: actions/cache/save@v4
@@ -109,12 +109,12 @@ jobs:
           ~/.cargo/registry/cache/
           ~/.cargo/git/db/
           target/
-  
+
     - name: Git Config
       run: |
         git config user.name "${{ inputs.git_user }}"
         git config user.email "${{ inputs.git_email }}"
-  
+
     - name: Cargo Format
       run: |
         cargo fmt
@@ -125,7 +125,7 @@ jobs:
           git commit -m "style: Apply code style with \`cargo fmt\`"
         fi
       continue-on-error: true
-  
+
     - name: Cargo Fix
       run: |
         cargo fix --release --allow-dirty --all-targets --message-format short
@@ -137,7 +137,7 @@ jobs:
           git commit -m "style: Apply code style with \`cargo fix\`"
         fi
       continue-on-error: true
-  
+
     - name: Cargo Clippy
       run: |
         cargo clippy --release --fix --allow-dirty --all-targets --message-format short
@@ -149,13 +149,13 @@ jobs:
           git commit -m "style: Apply code style with \`cargo clippy --fix\`"
         fi
       continue-on-error: true
-  
+
     - name: Git Status
       run: git status
-  
+
     - name: Git Push
       run: git push
-  
+
     - name: Upload WebAssembly
       uses: actions/upload-artifact@v4
       with:

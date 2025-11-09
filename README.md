@@ -6,7 +6,6 @@ Advanced, feature rich reusable workflows for GitHub Actions to fully automate t
 
 [`ci-cd.yml`](.github/workflows/ci-cd.yml)
 
-
 ```mermaid
 flowchart TD
     subgraph TESTS[Tests]
@@ -118,15 +117,15 @@ flowchart TD
     %% Main workflow connections
     surveyor --> test
     surveyor --> build
-    
+
     test --> git-tag
     build --> git-tag
-    
+
     test --> github-release
     build --> github-release
-    
+
     github-release --> cargo-publish
-    
+
     surveyor --> push-webassembly
     test --> push-webassembly
     build --> push-webassembly
@@ -166,7 +165,7 @@ flowchart TD
 
     %% Main workflow connections
     surveyor --> dioxus-build-web
-    
+
     dioxus-build-web --> git-tag
     dioxus-build-web --> github-release
     dioxus-build-web --> dioxus-push
@@ -217,13 +216,13 @@ flowchart TD
 
     %% Main workflow connections
     surveyor --> cargo-build
-    
+
     cargo-build --> git-tag
     cargo-build --> github-release
     cargo-build --> environment
-    
+
     github-release --> cargo-publish
-    
+
     surveyor --> docker-build
     docker-build --> docker-push-prerelease
     docker-build --> docker-push-release

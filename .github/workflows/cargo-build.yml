@@ -18,7 +18,7 @@ on:
         required: false
         type: string
 jobs:
-  
+
   cargo-build:
     name: Cargo Build
     runs-on: ${{ matrix.os }}
@@ -53,10 +53,10 @@ jobs:
           target: x86_64-pc-windows-msvc
 
     steps:
-  
+
     - name: git checkout
       uses: actions/checkout@v4
-  
+
     - name: Restore cargo cache
       id: cache-cargo
       uses: actions/cache/restore@v4
@@ -71,39 +71,39 @@ jobs:
           ~/.cargo/registry/cache/
           ~/.cargo/git/db/
           target/
-  
+
     - name: Download Cargo.toml
       uses: actions/download-artifact@v4
       with:
         name: Cargo.toml
-  
+
     - name: Diff
       run: git --no-pager diff --color
-  
+
     - name: apt update
       if: contains(matrix.os, 'ubuntu')
       run: sudo apt-get update
-  
+
     - name: apt install
       if: ${{ matrix.target == 'x86_64-unknown-linux-musl' }}
       run: sudo apt-get install musl-dev musl-tools libssl-dev --yes
-  
+
     - name: apt install
       if: matrix.target == 'aarch64-unknown-linux-gnu'
       run: sudo apt-get install gcc-aarch64-linux-gnu g++-aarch64-linux-gnu libc6-dev-arm64-cross --yes
-  
+
     - name: apt install
       if: matrix.target == 'aarch64-unknown-linux-musl'
       run: sudo apt-get install musl-tools gcc-aarch64-linux-gnu musl-dev --yes
-  
+
     - name: rustup target
       run: rustup target add ${{ matrix.target }}
-  
+
     - name: cargo build
       run: cargo build --release --target ${{ matrix.target }} --package ${{ inputs.package_name }}
       env:
         PKG_CONFIG_ALLOW_CROSS: 1
-  
+
     - name: Save cargo cache
       id: cargo-cache-save
       uses: actions/cache/save@v4
@@ -115,7 +115,7 @@ jobs:
           ~/.cargo/registry/cache/
           ~/.cargo/git/db/
           target/
-  
+
     - name: Create artifacts directory
       if: inputs.binary_name != ''
       run: mkdir artifacts
@@ -130,20 +130,20 @@ jobs:
         else
           echo "extension=" >> $GITHUB_OUTPUT
         fi
-  
+
     - name: Copy binary
       if: inputs.binary_name != ''
       run: >
         cp target/${{ matrix.target }}/release/${{ inputs.binary_name }}${{ steps.binary-ext.outputs.extension }}
         artifacts/${{ inputs.binary_name }}-${{ inputs.version }}-${{ matrix.target }}${{ steps.binary-ext.outputs.extension }}
-  
+
     - name: Upload binary artifact
       if: inputs.binary_name != ''
-      uses: actions/upload-artifact@v4      
+      uses: actions/upload-artifact@v4
       with:
         name: ${{ inputs.binary_name }}-${{ inputs.version }}-${{ matrix.target }}${{ steps.binary-ext.outputs.extension }}
         path: artifacts/${{ inputs.binary_name }}-${{ inputs.version }}-${{ matrix.target }}${{ steps.binary-ext.outputs.extension }}
-  
+
     - name: Remove artifacts
       run: rm -rf artifacts
 
@@ -155,11 +155,11 @@ jobs:
         MATRIX_OS: ${{ matrix.os }}
         MATRIX_TEST: ${{ matrix.test }}
         VERSION: ${{ inputs.version }}
-  
+
     - name: cargo test
       if: matrix.test
       run: cargo test --release --color=always --no-fail-fast --target ${{ matrix.target }} ${{ inputs.test_args }}
-  
+
     - name: cargo check
       if: matrix.target == 'x86_64-unknown-linux-gnu'
       run: |
@@ -167,7 +167,7 @@ jobs:
         then
           echo "::warning title=Cargo Check Failed::Please review the output for details."
         fi
-  
+
     - name: cargo clippy
       if: matrix.target == 'x86_64-unknown-linux-gnu'
       run: |
@@ -175,7 +175,7 @@ jobs:
         then
           echo "::warning title=Clippy Check Failed::Please review the output for details."
         fi
-  
+
     - name: cargo fmt
       if: matrix.target == 'x86_64-unknown-linux-gnu'
       run: |
@@ -183,6 +183,6 @@ jobs:
         then
           echo "::warning title=Format Check Failed::Please review the output for details."
         fi
-  
+
     - name: Diff
       run: git --no-pager diff --color
