@@ -96,15 +96,6 @@ jobs:
       version: ${{ needs.surveyor.outputs.version }}
       binary_name: ${{ inputs.binary_name }}
 
-  cargo-publish:
-    name: Cargo Publish
-    if: needs.surveyor.outputs.type == 'release'
-    uses: StudioLE/Actions/.github/workflows/cargo-publish.yml@v7
-    needs:
-    - github-release
-    secrets:
-      cargo_registry_token: ${{ secrets.cargo_registry_token }}
-
   push-webassembly:
     name: Push WebAssembly
     if: needs.surveyor.outputs.type == 'release' && inputs.web_repo_name != ''
