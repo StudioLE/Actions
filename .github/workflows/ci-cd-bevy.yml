@@ -6,6 +6,12 @@ on:
       binary_name:
         required: true
         type: string
+      assets_repo_name:
+        required: false
+        type: string
+      assets_repo_path:
+        required: false
+        type: string
       wasm_bindgen_version:
         required: false
         type: string
@@ -58,6 +64,8 @@ jobs:
     with:
       version: ${{ needs.surveyor.outputs.version }}
       binary_name: ${{ inputs.binary_name }}
+      assets_repo_name: ${{ inputs.assets_repo_name }}
+      assets_repo_path: ${{ inputs.assets_repo_path }}
       wasm_bindgen_version: ${{ inputs.wasm_bindgen_version }}
 
   git-tag:

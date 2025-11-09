@@ -16,6 +16,9 @@ on:
       assets_repo_name:
         required: false
         type: string
+      assets_repo_path:
+        required: false
+        type: string
       wasm_bindgen_version:
         required: false
         type: string
@@ -142,7 +145,7 @@ jobs:
 
     - name: Copy Assets
       if: matrix.target != 'wasm32-unknown-unknown' && inputs.assets_repo_name != ''
-      run: cp -r assets-repo/assets artifacts/assets
+      run: cp -r assets-repo/${{ inputs.assets_repo_path }} artifacts/assets
 
     - name: Remove Assets repo
       if: matrix.target != 'wasm32-unknown-unknown' && inputs.assets_repo_name != ''
