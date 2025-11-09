@@ -73,6 +73,10 @@ jobs:
         pattern: ${{ inputs.binary_name }}-${{ inputs.version }}-*
         merge-multiple: true
 
+    - name: List
+      if: inputs.binary_name != ''
+      run: ls -R1
+
     - name: Upload release assets
       if: inputs.binary_name != ''
       run: >
