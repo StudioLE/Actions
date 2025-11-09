@@ -193,7 +193,8 @@ jobs:
       run: >
         tar -czvf
         ${{ steps.artifact.outputs.name }}.tar.gz
-        artifacts/
+        -C artifacts
+        .
 
     - name: Verify archive
       run: >
