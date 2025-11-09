@@ -120,17 +120,15 @@ jobs:
           target/
 
     - name: Create artifacts directory
-      id: artifact
       run: |
-        ARTIFACT="${{ inputs.binary_name }}-${{ inputs.version }}-${{ matrix.target }}"
-        mkdir "${ARTIFACT}"
-        echo "name=${ARTIFACT}" >> $GITHUB_OUTPUT
+        rm -rf artifacts
+        mkdir artifacts
 
     - name: Copy binary
       if: matrix.target != 'wasm32-unknown-unknown'
       run: >
         cp target/${{ matrix.target }}/release/${{ inputs.binary_name }}
-        ${{ steps.artifact.outputs.name }}/
+        artifacts/
 
     - name: Checkout Assets
       if: matrix.target != 'wasm32-unknown-unknown' && inputs.assets_repo_name != ''
@@ -144,7 +142,7 @@ jobs:
 
     - name: Copy Assets
       if: matrix.target != 'wasm32-unknown-unknown' && inputs.assets_repo_name != ''
-      run: cp -r assets-repo/assets ${{ steps.artifact.outputs.name }}/assets
+      run: cp -r assets-repo/assets artifacts/assets
 
     - name: Remove Assets repo
       if: matrix.target != 'wasm32-unknown-unknown' && inputs.assets_repo_name != ''
@@ -176,12 +174,41 @@ jobs:
     - name: Copy WebAssembly
       if: matrix.target == 'wasm32-unknown-unknown'
       run: |
-        cp web/index.html ${{ steps.artifact.outputs.name }}/
-        cp web/${{ inputs.binary_name }}.js ${{ steps.artifact.outputs.name }}/
-        cp web/${{ inputs.binary_name }}_bg.wasm ${{ steps.artifact.outputs.name }}/
-        cp web/style.css ${{ steps.artifact.outputs.name }}/
+        cp web/index.html artifacts/
+        cp web/${{ inputs.binary_name }}.js artifacts/
+        cp web/${{ inputs.binary_name }}_bg.wasm artifacts/
+        cp web/style.css artifacts/
 
-    - uses: actions/upload-artifact@v4
+    - name: List
+      if: inputs.binary_name != ''
+      run: ls -R1 artifacts
+
+    - name: Set artifact name
+      id: artifact
+      run: |
+        ARTIFACT="${{ inputs.binary_name }}-${{ inputs.version }}-${{ matrix.target }}"
+        echo "name=${ARTIFACT}" >> $GITHUB_OUTPUT
+
+    - name: Create archive
+      run: >
+        tar -czvf
+        ${{ steps.artifact.outputs.name }}.tar.gz
+        artifacts/
+
+    - name: Verify archive
+      run: >
+        tar -tzf
+        ${{ steps.artifact.outputs.name }}.tar.gz
+
+    - name: Upload archive artifact
+      uses: actions/upload-artifact@v4
       with:
-        name: ${{ steps.artifact.outputs.name }}
-        path: ${{ steps.artifact.outputs.name }}
+        name: ${{ steps.artifact.outputs.name }}.tar.gz
+        path: ${{ steps.artifact.outputs.name }}.tar.gz
+
+    - name: Upload WebAssembly artifact
+      uses: actions/upload-artifact@v4
+      if: matrix.target == 'wasm32-unknown-unknown'
+      with:
+        name: WebAssembly
+        path: artifacts

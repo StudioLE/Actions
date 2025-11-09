@@ -72,17 +72,18 @@ jobs:
       with:
         pattern: ${{ inputs.binary_name }}-${{ inputs.version }}-*
         merge-multiple: true
+        path: artifacts
 
     - name: List
       if: inputs.binary_name != ''
-      run: ls -R1
+      run: ls -R1 artifacts
 
     - name: Upload release assets
       if: inputs.binary_name != ''
       run: >
         gh release upload
         "v${{ inputs.version }}"
-        "${{ inputs.binary_name }}-${{ inputs.version }}-"*
+        artifacts/*
         --clobber
         --repo "${{ github.repository }}"
       env:

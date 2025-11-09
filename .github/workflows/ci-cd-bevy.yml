@@ -103,7 +103,7 @@ jobs:
     - build
     with:
       repo: ${{ inputs.web_repo_name }}
-      artifact: ${{ inputs.binary_name }}-${{ needs.surveyor.outputs.version }}-wasm32-unknown-unknown
+      artifact: WebAssembly
       rm: latest
       path: latest
       copy: v${{ needs.surveyor.outputs.version }}
