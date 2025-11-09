@@ -30,6 +30,8 @@ on:
     secrets:
       cargo_registry_token:
         required: true
+      assets_repo_token:
+        required: false
       web_repo_token:
         required: false
     outputs:
@@ -67,6 +69,8 @@ jobs:
       assets_repo_name: ${{ inputs.assets_repo_name }}
       assets_repo_path: ${{ inputs.assets_repo_path }}
       wasm_bindgen_version: ${{ inputs.wasm_bindgen_version }}
+    secrets:
+      assets_repo_token: ${{ secrets.assets_repo_token }}
 
   git-tag:
     name: Tag
