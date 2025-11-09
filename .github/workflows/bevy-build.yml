@@ -36,10 +36,23 @@ jobs:
       fail-fast: false
       matrix:
         include:
+        # 64-bit Linux
         - target: x86_64-unknown-linux-gnu
           os: ubuntu-24.04
+          test: true
+        # ARM64 Linux
+        - target: aarch64-unknown-linux-gnu
+          os: ubuntu-24.04-arm
+        # ARM64 macOS (11.0+, Big Sur+)
+        - target: aarch64-apple-darwin
+          os: macos-15
+        # 64-bit macOS (10.12+, Sierra+)
+        - target: x86_64-apple-darwin
+          os: macos-15-intel
+        # 64-bit Windows
         - target: x86_64-pc-windows-msvc
           os: windows-latest
+        # Web Assembly
         - target: wasm32-unknown-unknown
           os: ubuntu-24.04
 
@@ -49,10 +62,11 @@ jobs:
       if: contains(matrix.os, 'ubuntu')
       run: sudo apt-get update
 
-    - name: Install dependencies
+    # https://github.com/bevyengine/bevy/blob/latest/docs/linux_dependencies.md#ubuntu
+    - name: Install Ubuntu dependencies
       if: contains(matrix.os, 'ubuntu')
       run: >
-        sudo apt-get install
+        sudo apt-get install --yes
         g++
         pkg-config
         libx11-dev
