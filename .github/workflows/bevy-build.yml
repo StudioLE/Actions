@@ -204,7 +204,7 @@ jobs:
 
     - name: Verify archive
       run: >
-        tar -tzf
+        tar tvf
         ${{ steps.artifact.outputs.name }}.tar.xz
 
     - name: Upload archive artifact
