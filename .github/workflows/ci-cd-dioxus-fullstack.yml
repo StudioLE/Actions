@@ -22,6 +22,9 @@ on:
       docker_args:
         required: false
         type: string
+      cargo_publish:
+        required: false
+        type: boolean
     secrets:
       cargo_registry_token:
         required: true
@@ -77,7 +80,7 @@ jobs:
 
   cargo-publish:
     name: Cargo Publish
-    if: needs.surveyor.outputs.type == 'release'
+    if: needs.surveyor.outputs.type == 'release' && inputs.cargo_publish == 'true'
     uses: StudioLE/Actions/.github/workflows/cargo-publish.yml@v7
     needs:
     - github-release
