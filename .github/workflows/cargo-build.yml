@@ -29,28 +29,31 @@ jobs:
       fail-fast: false
       matrix:
         include:
-        # 64-bit Linux
-        - os: ubuntu-24.04
-          target: x86_64-unknown-linux-gnu
+        # Linux on 64-bit Intel/AMD
+        - target: x86_64-unknown-linux-gnu
+          os: ubuntu-24.04
           test: true
-        # 64-bit Linux with musl
+        # Linux on 64-bit Intel/AMD with musl
         - os: ubuntu-24.04
           target: x86_64-unknown-linux-musl
-        # ARM64 Linux
-        - os: ubuntu-24.04-arm
-          target: aarch64-unknown-linux-gnu
-        # ARM64 Linux with musl
-        - os: ubuntu-24.04-arm
-          target: aarch64-unknown-linux-musl
-        # ARM64 macOS (11.0+, Big Sur+)
-        - os: macos-15
-          target: aarch64-apple-darwin
-        # 64-bit macOS (10.12+, Sierra+)
-        - os: macos-15-intel
-          target: x86_64-apple-darwin
-        # 64-bit Windows
-        - os: windows-latest
-          target: x86_64-pc-windows-msvc
+        # Linux on 64-bit ARM
+        - target: aarch64-unknown-linux-gnu
+          os: ubuntu-24.04-arm
+        # Linux on 64-bit ARM with musl
+        - target: aarch64-unknown-linux-musl
+          os: ubuntu-24.04-arm
+        # macOS on 64-bit ARM (11.0+, Big Sur+)
+        - target: aarch64-apple-darwin
+          os: macos-15
+        # macOS on 64-bit Intel (10.12+, Sierra+)
+        - target: x86_64-apple-darwin
+          os: macos-15-intel
+        # Windows on 64-bit Intel/AMD
+        - target: x86_64-pc-windows-msvc
+          os: windows-latest
+        # Windows on 64-bit ARM
+        - target: aarch64-pc-windows-msvc
+          os: windows-11-arm
 
     steps:
 
@@ -120,6 +123,12 @@ jobs:
       if: inputs.binary_name != ''
       run: mkdir artifacts
 
+    - name: Set artifact name
+      id: artifact
+      run: |
+        ARTIFACT="${{ inputs.binary_name }}-${{ inputs.version }}-${{ matrix.target }}"
+        echo "name=${ARTIFACT}" >> $GITHUB_OUTPUT
+
     - name: Set binary extension
       if: inputs.binary_name != ''
       id: binary-ext
@@ -135,17 +144,34 @@ jobs:
       if: inputs.binary_name != ''
       run: >
         cp target/${{ matrix.target }}/release/${{ inputs.binary_name }}${{ steps.binary-ext.outputs.extension }}
-        artifacts/${{ inputs.binary_name }}-${{ inputs.version }}-${{ matrix.target }}${{ steps.binary-ext.outputs.extension }}
+        artifacts/
+
+    - name: List
+      if: inputs.binary_name != ''
+      run: ls -R1 artifacts
+
+    - name: Create archive
+      run: >
+        tar cJvf
+        ${{ steps.artifact.outputs.name }}.tar.xz
+        -C artifacts
+        .
+
+    - name: Verify archive
+      run: >
+        tar tvf
+        ${{ steps.artifact.outputs.name }}.tar.xz
 
     - name: Upload binary artifact
-      if: inputs.binary_name != ''
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ inputs.binary_name }}-${{ inputs.version }}-${{ matrix.target }}${{ steps.binary-ext.outputs.extension }}
-        path: artifacts/${{ inputs.binary_name }}-${{ inputs.version }}-${{ matrix.target }}${{ steps.binary-ext.outputs.extension }}
+        name: ${{ steps.artifact.outputs.name }}.tar.xz
+        path: ${{ steps.artifact.outputs.name }}.tar.xz
 
     - name: Remove artifacts
-      run: rm -rf artifacts
+      run: |
+        rm -rf artifacts
+        rm -f ${{ steps.artifact.outputs.name }}.tar.xz
 
     - name: Run before test hook
       if: matrix.test && inputs.run_before_test != ''
