@@ -197,21 +197,21 @@ jobs:
 
     - name: Create archive
       run: >
-        tar -czvf
-        ${{ steps.artifact.outputs.name }}.tar.gz
+        tar cJvf
+        ${{ steps.artifact.outputs.name }}.tar.xz
         -C artifacts
         .
 
     - name: Verify archive
       run: >
         tar -tzf
-        ${{ steps.artifact.outputs.name }}.tar.gz
+        ${{ steps.artifact.outputs.name }}.tar.xz
 
     - name: Upload archive artifact
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ steps.artifact.outputs.name }}.tar.gz
-        path: ${{ steps.artifact.outputs.name }}.tar.gz
+        name: ${{ steps.artifact.outputs.name }}.tar.xz
+        path: ${{ steps.artifact.outputs.name }}.tar.xz
 
     - name: Upload WebAssembly artifact
       uses: actions/upload-artifact@v4
