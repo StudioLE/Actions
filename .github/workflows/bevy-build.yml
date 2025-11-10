@@ -39,22 +39,25 @@ jobs:
       fail-fast: false
       matrix:
         include:
-        # 64-bit Linux
+        # Linux on 64-bit Intel/AMD
         - target: x86_64-unknown-linux-gnu
           os: ubuntu-24.04
           test: true
-        # ARM64 Linux
+        # Linux on 64-bit ARM
         - target: aarch64-unknown-linux-gnu
           os: ubuntu-24.04-arm
-        # ARM64 macOS (11.0+, Big Sur+)
+        # macOS on 64-bit ARM (11.0+, Big Sur+)
         - target: aarch64-apple-darwin
           os: macos-15
-        # 64-bit macOS (10.12+, Sierra+)
+        # macOS on 64-bit Intel (10.12+, Sierra+)
         - target: x86_64-apple-darwin
           os: macos-15-intel
-        # 64-bit Windows
+        # Windows on 64-bit Intel/AMD
         - target: x86_64-pc-windows-msvc
           os: windows-latest
+        # Windows on 64-bit ARM
+        - target: aarch64-pc-windows-msvc
+          os: windows-11-arm
         # Web Assembly
         - target: wasm32-unknown-unknown
           os: ubuntu-24.04
