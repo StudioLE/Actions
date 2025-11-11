@@ -6,6 +6,9 @@ on:
       package_name:
         required: true
         type: string
+      dioxus_version:
+        required: true
+        type: string
       artifact_name:
         required: false
         type: string
@@ -37,8 +40,9 @@ jobs:
     - surveyor
     with:
       package_name: ${{ inputs.package_name }}
-      version: ${{ needs.surveyor.outputs.version }}
+      dioxus_version: ${{ inputs.dioxus_version }}
       artifact_name: ${{ inputs.artifact_name }}
+      version: ${{ needs.surveyor.outputs.version }}
 
   git-tag:
     name: Tag

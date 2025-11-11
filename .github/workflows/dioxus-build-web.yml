@@ -10,6 +10,9 @@ on:
       package_name:
         required: true
         type: string
+      dioxus_version:
+        required: true
+        type: string
       artifact_name:
         required: false
         type: string
@@ -82,7 +85,7 @@ jobs:
       run: /home/linuxbrew/.linuxbrew/bin/brew install cargo-binstall
 
     - name: Install Dioxus CLI
-      run: /home/linuxbrew/.linuxbrew/bin/cargo-binstall dioxus-cli
+      run: /home/linuxbrew/.linuxbrew/bin/cargo-binstall dioxus-cli@${{ inputs.dioxus_version }}
 
     - name: NPM Install
       run: npm install
