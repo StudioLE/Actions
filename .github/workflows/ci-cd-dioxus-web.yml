@@ -3,24 +3,18 @@ name: CI/CD
 on:
   workflow_call:
     inputs:
-      dioxus_web_name:
-        required: false
+      package_name:
+        required: true
         type: string
-        default: ""
-      dioxus_web_path:
-        required: false
-        type: string
-        default: ""
-      dioxus_web_artifact:
+      artifact_name:
         required: false
         type: string
         default: WebAssembly
-      dioxus_web_repo:
+      web_repo_name:
         required: false
         type: string
-        default: WebAssembly
     secrets:
-      dioxus_web_repo_token:
+      web_repo_token:
         required: true
     outputs:
       version:
@@ -42,10 +36,9 @@ jobs:
     needs:
     - surveyor
     with:
-      package_name: ${{ inputs.dioxus_web_name }}
-      package_path: ${{ inputs.dioxus_web_path }}
+      package_name: ${{ inputs.package_name }}
       version: ${{ needs.surveyor.outputs.version }}
-      artifact_name: ${{ inputs.dioxus_web_artifact }}
+      artifact_name: ${{ inputs.artifact_name }}
 
   git-tag:
     name: Tag
@@ -70,20 +63,20 @@ jobs:
 
   dioxus-push:
     name: Push Dioxus
-    if: needs.surveyor.outputs.type == 'release' && inputs.dioxus_web_repo != ''
+    if: needs.surveyor.outputs.type == 'release' && inputs.web_repo_name != ''
     uses: StudioLE/Actions/.github/workflows/push-to-repo.yml@v7
     needs:
     - surveyor
     - dioxus-build-web
     with:
-      repo: ${{ inputs.dioxus_web_repo }}
-      artifact: ${{ inputs.dioxus_web_artifact }}
+      repo: ${{ inputs.web_repo_name }}
+      artifact: ${{ inputs.artifact_name }}
       rm: latest
       path: latest
       copy: v${{ needs.surveyor.outputs.version }}
       message: "feat: Added ${{ needs.surveyor.outputs.version }} WebAssembly build"
     secrets:
-      repo_token: ${{ secrets.dioxus_web_repo_token }}
+      repo_token: ${{ secrets.web_repo_token }}
 
   environment:
     name: Environment

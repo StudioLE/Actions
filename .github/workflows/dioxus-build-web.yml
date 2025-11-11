@@ -10,10 +10,6 @@ on:
       package_name:
         required: true
         type: string
-      package_path:
-        required: false
-        type: string
-        default: ''
       artifact_name:
         required: false
         type: string
@@ -36,10 +32,6 @@ jobs:
     name: Dioxus Build
     runs-on: ${{ inputs.os }}
     steps:
-
-    - name: Change Directory
-      if: inputs.package_path != ''
-      run: cd "${{ inputs.package_path }}"
 
     - name: Fetch dependencies
       run: sudo apt-get update
