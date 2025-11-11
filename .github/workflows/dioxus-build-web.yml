@@ -105,6 +105,50 @@ jobs:
           ~/.cargo/git/db/
           target/
 
+    - name: Copy bundle
+      run: >
+        cp -r
+        target/dx/${{ inputs.package_name }}/release/web/public
+        artifacts/
+
+    - name: Set artifact name
+      id: artifact
+      run: |
+        ARTIFACT="${{ inputs.package_name }}-${{ inputs.version }}-wasm"
+        echo "name=${ARTIFACT}" >> $GITHUB_OUTPUT
+
+    - name: List
+      run: ls -R1 artifacts
+
+    - name: Create archive
+      run: >
+        tar cJvf
+        ${{ steps.artifact.outputs.name }}.tar.xz
+        -C artifacts
+        .
+
+    - name: Verify archive
+      run: >
+        tar tvf
+        ${{ steps.artifact.outputs.name }}.tar.xz
+
+    - name: Upload archived artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ steps.artifact.outputs.name }}.tar.xz
+        path: ${{ steps.artifact.outputs.name }}.tar.xz
+
+    - name: Upload WebAssembly
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ inputs.artifact_name }}
+        path: artifacts
+
+    - name: Remove artifacts
+      run: |
+        rm -rf artifacts
+        rm -f ${{ steps.artifact.outputs.name }}.tar.xz
+
     - name: Git Config
       run: |
         git config user.name "${{ inputs.git_user }}"
@@ -150,9 +194,3 @@ jobs:
 
     - name: Git Push
       run: git push
-
-    - name: Upload WebAssembly
-      uses: actions/upload-artifact@v4
-      with:
-        name: ${{ inputs.artifact_name }}
-        path: target/dx/${{ inputs.package_name }}/release/web/public

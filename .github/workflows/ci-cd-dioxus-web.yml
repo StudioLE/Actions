@@ -64,6 +64,7 @@ jobs:
     with:
       type: ${{ needs.surveyor.outputs.type }}
       version: ${{ needs.surveyor.outputs.version }}
+      binary_name: ${{ inputs.package_name }}
 
   dioxus-push:
     name: Push Dioxus
