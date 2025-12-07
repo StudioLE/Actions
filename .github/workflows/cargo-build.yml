@@ -17,6 +17,45 @@ on:
       test_args:
         required: false
         type: string
+      matrix:
+        required: false
+        type: string
+        default: |
+          [
+            {
+              "target": "x86_64-unknown-linux-gnu",
+              "os": "ubuntu-24.04",
+              "test": true
+            },
+            {
+              "target": "x86_64-unknown-linux-musl",
+              "os": "ubuntu-24.04"
+            },
+            {
+              "target": "aarch64-unknown-linux-gnu",
+              "os": "ubuntu-24.04-arm"
+            },
+            {
+              "target": "aarch64-unknown-linux-musl",
+              "os": "ubuntu-24.04-arm"
+            },
+            {
+              "target": "aarch64-apple-darwin",
+              "os": "macos-15"
+            },
+            {
+              "target": "x86_64-apple-darwin",
+              "os": "macos-15-intel"
+            },
+            {
+              "target": "x86_64-pc-windows-msvc",
+              "os": "windows-latest"
+            },
+            {
+              "target": "aarch64-pc-windows-msvc",
+              "os": "windows-11-arm"
+            }
+          ]
 jobs:
 
   cargo-build:
@@ -28,32 +67,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-        # Linux on 64-bit Intel/AMD
-        - target: x86_64-unknown-linux-gnu
-          os: ubuntu-24.04
-          test: true
-        # Linux on 64-bit Intel/AMD with musl
-        - target: x86_64-unknown-linux-musl
-          os: ubuntu-24.04
-        # Linux on 64-bit ARM
-        - target: aarch64-unknown-linux-gnu
-          os: ubuntu-24.04-arm
-        # Linux on 64-bit ARM with musl
-        - target: aarch64-unknown-linux-musl
-          os: ubuntu-24.04-arm
-        # macOS on 64-bit ARM (11.0+, Big Sur+)
-        - target: aarch64-apple-darwin
-          os: macos-15
-        # macOS on 64-bit Intel (10.12+, Sierra+)
-        - target: x86_64-apple-darwin
-          os: macos-15-intel
-        # Windows on 64-bit Intel/AMD
-        - target: x86_64-pc-windows-msvc
-          os: windows-latest
-        # Windows on 64-bit ARM
-        - target: aarch64-pc-windows-msvc
-          os: windows-11-arm
+        include: ${{ fromJson(inputs.matrix-json) }}
 
     steps:
 
