@@ -25,6 +25,9 @@ on:
       cargo_publish:
         required: false
         type: boolean
+      matrix:
+        required: false
+        type: string
     secrets:
       cargo_registry_token:
         required: true
@@ -55,6 +58,7 @@ jobs:
       binary_name: ${{ inputs.binary_name }}
       run_before_test: ${{ inputs.run_before_test }}
       test_args: ${{ inputs.test_args }}
+      matrix: ${{ inputs.matrix }}
 
   git-tag:
     name: Tag
