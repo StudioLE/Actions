@@ -67,7 +67,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include: ${{ fromJson(inputs.matrix-json) }}
+        include: ${{ fromJson(inputs.matrix) }}
 
     steps:
 
