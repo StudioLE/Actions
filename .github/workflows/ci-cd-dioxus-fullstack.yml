@@ -28,6 +28,42 @@ on:
       matrix:
         required: false
         type: string
+        default: |
+          [
+            {
+              "target": "x86_64-unknown-linux-gnu",
+              "os": "ubuntu-24.04",
+              "test": true
+            },
+            {
+              "target": "x86_64-unknown-linux-musl",
+              "os": "ubuntu-24.04"
+            },
+            {
+              "target": "aarch64-unknown-linux-gnu",
+              "os": "ubuntu-24.04-arm"
+            },
+            {
+              "target": "aarch64-unknown-linux-musl",
+              "os": "ubuntu-24.04-arm"
+            },
+            {
+              "target": "aarch64-apple-darwin",
+              "os": "macos-15"
+            },
+            {
+              "target": "x86_64-apple-darwin",
+              "os": "macos-15-intel"
+            },
+            {
+              "target": "x86_64-pc-windows-msvc",
+              "os": "windows-latest"
+            },
+            {
+              "target": "aarch64-pc-windows-msvc",
+              "os": "windows-11-arm"
+            }
+          ]
     secrets:
       cargo_registry_token:
         required: true
