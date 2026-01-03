@@ -1,0 +1,108 @@
+name: GitHub Release
+
+on:
+  workflow_call:
+    inputs:
+      os:
+        required: false
+        type: string
+        default: ubuntu-latest
+      version:
+        required: true
+        type: string
+      binary_name:
+        required: true
+        type: string
+      brew_repo:
+        required: true
+        type: string
+      template:
+        required: true
+        type: string
+    secrets:
+      brew_repo_token:
+        required: true
+
+jobs:
+
+  github-release:
+    name: GitHub Release
+    runs-on: ${{ inputs.os }}
+    steps:
+
+    - uses: actions/checkout@v4
+
+    - name: Download binaries
+      uses: actions/download-artifact@v4
+      with:
+        pattern: ${{ inputs.binary_name }}-${{ inputs.version }}-*
+        merge-multiple: true
+        path: artifacts
+
+    - name: List
+      run: ls -R1 artifacts
+
+    - name: Create Formula directory
+      run: mkdir -p Formula
+
+    - name: Write template to file
+      run: |
+        cat > Formula/${{ inputs.binary_name }}.rb << 'TEMPLATE_EOF'
+        ${{ inputs.template }}
+        TEMPLATE_EOF
+
+    - name: Insert version
+      run: sed -i "s|{{version}}|${{ inputs.version }}|g" Formula/${{ inputs.binary_name }}.rb
+
+    - name: Insert binary_name
+      run: sed -i "s|{{binary_name}}|${{ inputs.binary_name }}|g" Formula/${{ inputs.binary_name }}.rb
+
+    - name: Insert SHA256
+      run: |
+        for artifact in artifacts/*.tar.xz
+        do
+          if [[ -f "$artifact" ]]
+          then
+            SHA256=$(sha256sum "$artifact" | awk '{print $1}')
+            TARGET=$(basename "$artifact" | sed -E "s/^${{ inputs.binary_name }}-${{ inputs.version }}-(.+)\.tar\.xz$/\1/")
+            sed -i "s|{{sha256:${TARGET}}}|${SHA256}|g" Formula/${{ inputs.binary_name }}.rb
+            echo "$(basename "$artifact") -> $TARGET -> $SHA256"
+          fi
+        done
+
+    - name: Display generated formula
+      run: cat Formula/${{ inputs.binary_name }}.rb
+
+    - name: Check for unreplaced placeholders
+      run: |
+        if grep -q "{{" Formula/${{ inputs.binary_name }}.rb
+        then
+          echo "::error::Formula still contains unreplaced placeholders:"
+          grep "{{" Formula/${{ inputs.binary_name }}.rb || true
+          exit 1
+        fi
+
+    - name: Validate Ruby syntax
+      run: |
+        if command -v ruby &> /dev/null
+        then
+          ruby -c Formula/${{ inputs.binary_name }}.rb
+        fi
+
+    - name: Upload Homebrew formula
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ inputs.binary_name }}.rb
+        path: Formula/${{ inputs.binary_name }}.rb
+
+  push-formula:
+    name: Push Formula
+    uses: StudioLE/Actions/.github/workflows/push-to-repo.yml@v7
+    needs: github-release
+    with:
+      repo: ${{ inputs.brew_repo }}
+      artifact: ${{ inputs.binary_name }}.rb
+      path: Formula/${{ inputs.binary_name }}.rb
+      message: "feat: Update `${{ inputs.binary_name }}` to `v${{ inputs.version }}`"
+    secrets:
+      repo_token: ${{ secrets.brew_repo_token }}
