@@ -84,7 +84,10 @@ jobs:
         git config user.name "${{ inputs.user_name }}"
         git config user.email "${{ inputs.user_email }}"
         git add --all
-        git commit --allow-empty -m "${{ inputs.message }}"
+        git commit --allow-empty -m "$(cat <<'EOF'
+        ${{ inputs.message }}
+        EOF
+        )"
 
     - name: Status
       run: git status
