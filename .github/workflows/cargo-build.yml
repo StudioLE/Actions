@@ -17,6 +17,9 @@ on:
       test_args:
         required: false
         type: string
+      check_args:
+        required: false
+        type: string
       matrix:
         required: false
         type: string
@@ -203,7 +206,7 @@ jobs:
     - name: cargo check
       if: matrix.target == 'x86_64-unknown-linux-gnu'
       run: |
-        if ! cargo check --quiet --all-targets --message-format short
+        if ! cargo check --quiet --all-targets --message-format short ${{ inputs.check_args }}
         then
           echo "::warning title=Cargo Check Failed::Please review the output for details."
         fi
@@ -211,7 +214,7 @@ jobs:
     - name: cargo clippy
       if: matrix.target == 'x86_64-unknown-linux-gnu'
       run: |
-        if ! cargo clippy --quiet --all-targets --message-format short
+        if ! cargo clippy --quiet --all-targets --message-format short ${{ inputs.check_args }}
         then
           echo "::warning title=Clippy Check Failed::Please review the output for details."
         fi
@@ -219,7 +222,7 @@ jobs:
     - name: cargo fmt
       if: matrix.target == 'x86_64-unknown-linux-gnu'
       run: |
-        if ! cargo fmt --check
+        if ! cargo fmt --check --all
         then
           echo "::warning title=Format Check Failed::Please review the output for details."
         fi

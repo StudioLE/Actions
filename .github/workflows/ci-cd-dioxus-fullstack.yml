@@ -15,6 +15,9 @@ on:
       test_args:
         required: false
         type: string
+      check_args:
+        required: false
+        type: string
       docker_name:
         required: false
         type: string
@@ -97,6 +100,7 @@ jobs:
       binary_name: ${{ inputs.binary_name }}
       run_before_test: ${{ inputs.run_before_test }}
       test_args: ${{ inputs.test_args }}
+      check_args: ${{ inputs.check_args }}
       docker_name: ${{ inputs.docker_name }}
       docker_args: ${{ inputs.docker_args }}
       cargo_publish: ${{ inputs.cargo_publish }}
