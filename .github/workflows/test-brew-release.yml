@@ -1,0 +1,229 @@
+name: Test brew-release.yml
+
+on:
+  push:
+    branches:
+
+  workflow_dispatch:
+
+jobs:
+
+  arrange:
+    name: Arrange
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.vars.outputs.version }}
+      binary_name: ${{ steps.vars.outputs.binary_name }}
+    steps:
+
+    - name: Set variables
+      id: vars
+      run: |
+        VERSION="0.0.0-test.${{ github.run_number }}"
+        BINARY_NAME="test-binary"
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "binary_name=$BINARY_NAME" >> $GITHUB_OUTPUT
+        echo "Version: $VERSION"
+        echo "Binary name: $BINARY_NAME"
+
+    - name: Create mock binary for x86_64-apple-darwin
+      run: |
+        echo "Mock binary for macOS Intel" > ${{ steps.vars.outputs.binary_name }}
+        tar -cJf ${{ steps.vars.outputs.binary_name }}-${{ steps.vars.outputs.version }}-x86_64-apple-darwin.tar.xz ${{ steps.vars.outputs.binary_name }}
+
+    - name: Create mock binary for aarch64-apple-darwin
+      run: |
+        echo "Mock binary for macOS ARM" > ${{ steps.vars.outputs.binary_name }}
+        tar -cJf ${{ steps.vars.outputs.binary_name }}-${{ steps.vars.outputs.version }}-aarch64-apple-darwin.tar.xz ${{ steps.vars.outputs.binary_name }}
+
+    - name: Create mock binary for x86_64-unknown-linux-gnu
+      run: |
+        echo "Mock binary for Linux x64" > ${{ steps.vars.outputs.binary_name }}
+        tar -cJf ${{ steps.vars.outputs.binary_name }}-${{ steps.vars.outputs.version }}-x86_64-unknown-linux-gnu.tar.xz ${{ steps.vars.outputs.binary_name }}
+
+    - name: Create mock binary for aarch64-unknown-linux-gnu
+      run: |
+        echo "Mock binary for Linux ARM" > ${{ steps.vars.outputs.binary_name }}
+        tar -cJf ${{ steps.vars.outputs.binary_name }}-${{ steps.vars.outputs.version }}-aarch64-unknown-linux-gnu.tar.xz ${{ steps.vars.outputs.binary_name }}
+
+    - name: List artifacts
+      run: ls -lh *.tar.xz
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ steps.vars.outputs.binary_name }}-${{ steps.vars.outputs.version }}-x86_64-apple-darwin
+        path: ${{ steps.vars.outputs.binary_name }}-${{ steps.vars.outputs.version }}-x86_64-apple-darwin.tar.xz
+        retention-days: 1
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ steps.vars.outputs.binary_name }}-${{ steps.vars.outputs.version }}-aarch64-apple-darwin
+        path: ${{ steps.vars.outputs.binary_name }}-${{ steps.vars.outputs.version }}-aarch64-apple-darwin.tar.xz
+        retention-days: 1
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ steps.vars.outputs.binary_name }}-${{ steps.vars.outputs.version }}-x86_64-unknown-linux-gnu
+        path: ${{ steps.vars.outputs.binary_name }}-${{ steps.vars.outputs.version }}-x86_64-unknown-linux-gnu.tar.xz
+        retention-days: 1
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ steps.vars.outputs.binary_name }}-${{ steps.vars.outputs.version }}-aarch64-unknown-linux-gnu
+        path: ${{ steps.vars.outputs.binary_name }}-${{ steps.vars.outputs.version }}-aarch64-unknown-linux-gnu.tar.xz
+        retention-days: 1
+
+  act:
+    name: Act
+    needs: arrange
+    uses: ./.github/workflows/brew-release.yml
+    with:
+      version: ${{ needs.arrange.outputs.version }}
+      binary_name: ${{ needs.arrange.outputs.binary_name }}
+      brew_repo: StudioLE/ActionsTests
+      brew_repo_ref: brew-release
+      sign_commits: true
+      brew_formula: |
+        class TestBinary < Formula
+          desc "Test binary for brew-release.yml validation"
+          homepage "https://github.com/StudioLE/Actions"
+          license "AGPL-3.0-only"
+          version "{{version}}"
+
+          on_macos do
+            if Hardware::CPU.arm?
+              url "https://github.com/StudioLE/Actions/releases/download/v{{version}}/{{binary_name}}-{{version}}-aarch64-apple-darwin.tar.xz"
+              sha256 "{{sha256:aarch64-apple-darwin}}"
+            else
+              url "https://github.com/StudioLE/Actions/releases/download/v{{version}}/{{binary_name}}-{{version}}-x86_64-apple-darwin.tar.xz"
+              sha256 "{{sha256:x86_64-apple-darwin}}"
+            end
+          end
+
+          on_linux do
+            if Hardware::CPU.arm?
+              url "https://github.com/StudioLE/Actions/releases/download/v{{version}}/{{binary_name}}-{{version}}-aarch64-unknown-linux-gnu.tar.xz"
+              sha256 "{{sha256:aarch64-unknown-linux-gnu}}"
+            else
+              url "https://github.com/StudioLE/Actions/releases/download/v{{version}}/{{binary_name}}-{{version}}-x86_64-unknown-linux-gnu.tar.xz"
+              sha256 "{{sha256:x86_64-unknown-linux-gnu}}"
+            end
+          end
+
+          def install
+            bin.install "{{binary_name}}"
+          end
+
+          test do
+            system "#{bin}/{{binary_name}}", "--help"
+          end
+        end
+    secrets:
+      brew_repo_token: ${{ secrets.TESTS_REPO_TOKEN }}
+      gpg_key_id: ${{ secrets.GPG_KEY_ID }}
+      gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+
+  assert:
+    name: Assert
+    needs:
+    - arrange
+    - act
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Checkout test repository
+      uses: actions/checkout@v4
+      with:
+        repository: StudioLE/ActionsTests
+        ref: brew-release
+        token: ${{ secrets.TESTS_REPO_TOKEN }}
+
+    - name: Set formula path
+      id: vars
+      run: |
+        FORMULA_FILE="Formula/${{ needs.arrange.outputs.binary_name }}.rb"
+        echo "formula_file=$FORMULA_FILE" >> $GITHUB_OUTPUT
+        echo "Formula file: $FORMULA_FILE"
+
+    - name: Assert formula exists
+      run: |
+        if [ ! -f "${{ steps.vars.outputs.formula_file }}" ]
+        then
+          echo "ERROR: Formula file does not exist: ${{ steps.vars.outputs.formula_file }}"
+          exit 1
+        fi
+        echo "✓ Formula file exists"
+
+    - name: Display formula
+      run: cat "${{ steps.vars.outputs.formula_file }}"
+
+    - name: Assert version is replaced
+      run: |
+        if ! grep -q "version \"${{ needs.arrange.outputs.version }}\"" ${{ steps.vars.outputs.formula_file }}
+        then
+          echo "ERROR: Formula does not contain correct version"
+          exit 1
+        fi
+        echo "✓ Version is correct"
+
+    - name: Assert binary_name is replaced
+      run: |
+        if ! grep -q "bin.install \"${{ needs.arrange.outputs.binary_name }}\"" ${{ steps.vars.outputs.formula_file }}
+        then
+          echo "ERROR: Formula does not contain correct binary_name"
+          exit 1
+        fi
+        echo "✓ Binary name is correct"
+
+    - name: Assert no unreplaced placeholders
+      run: |
+        if grep -q "{{" ${{ steps.vars.outputs.formula_file }}
+        then
+          echo "ERROR: Formula contains unreplaced placeholders:"
+          grep "{{" ${{ steps.vars.outputs.formula_file }} || true
+          exit 1
+        fi
+        echo "✓ No unreplaced placeholders"
+
+    - name: Assert SHA256 checksums exist
+      run: |
+        for target in x86_64-apple-darwin aarch64-apple-darwin x86_64-unknown-linux-gnu aarch64-unknown-linux-gnu
+        do
+          if ! grep -q "sha256 \"[a-f0-9]\{64\}\"" ${{ steps.vars.outputs.formula_file }}
+          then
+            echo "ERROR: Formula does not contain SHA256 checksum for $target"
+            exit 1
+          fi
+        done
+        echo "✓ SHA256 checksums present"
+
+    - name: Validate Ruby syntax
+      run: |
+        if command -v ruby &> /dev/null
+        then
+          ruby -c ${{ steps.vars.outputs.formula_file }}
+          echo "✓ Ruby syntax is valid"
+        else
+          echo "⚠ Ruby not available, skipping syntax check"
+        fi
+
+    - name: Verify commit is signed
+      run: |
+        if ! git log -1 --show-signature
+        then
+          echo "ERROR: Failed to show signature"
+          exit 1
+        fi
+
+    - name: Signature details
+      run: |
+        SIGN_STATUS=$(git log -1 --format='%G?')
+        echo "Signature status: $SIGN_STATUS"
+        echo "Signer: $(git log -1 --format='%GS')"
+        echo "Key ID: $(git log -1 --format='%GK')"
+
+        echo "✓ Commit is GPG signed"

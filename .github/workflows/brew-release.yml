@@ -16,6 +16,10 @@ on:
       brew_repo:
         required: true
         type: string
+      brew_repo_ref:
+        required: false
+        type: string
+        description: 'Git ref/branch to push formula to'
       brew_formula:
         required: true
         type: string
@@ -106,10 +110,11 @@ jobs:
 
   push-formula:
     name: Push Formula
-    uses: StudioLE/Actions/.github/workflows/push-to-repo.yml@v7
+    uses: ./.github/workflows/push-to-repo.yml
     needs: brew
     with:
       repo: ${{ inputs.brew_repo }}
+      ref: ${{ inputs.brew_repo_ref }}
       artifact: ${{ inputs.binary_name }}.rb
       path: Formula
       message: "feat: Update `${{ inputs.binary_name }}` to `v${{ inputs.version }}`"
