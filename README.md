@@ -202,6 +202,8 @@ flowchart TD
     subgraph PUBLISH[Publish]
         cargo-publish[*cargo-publish*
         Publish to crates.io]:::PUSH
+        brew-release[*brew-release*
+        Generate and publish Homebrew formula]:::PUSH
     end
 
     subgraph DOCKER[Docker]
@@ -224,6 +226,8 @@ flowchart TD
     cargo-build --> environment
 
     github-release --> cargo-publish
+    github-release --> brew-release
+    cargo-build --> brew-release
 
     surveyor --> docker-build
     docker-build --> docker-push-prerelease
