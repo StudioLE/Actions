@@ -239,3 +239,26 @@ flowchart TD
     classDef RELEASE fill:#f59e0b
     classDef PUSH fill:#0ea5e9
 ```
+
+## GPG Commit Signing
+
+The `push-to-repo.yml` workflow supports optional GPG commit signing for verified commits. Signing is **automatically enabled** when both `gpg_key_id` input and `gpg_private_key` secret are provided.
+
+### Requirements
+- GPG key with no passphrase stored in GitHub Secrets as `GPG_KEY_ID`
+- GPG private key stored in GitHub Secrets as `GPG_PRIVATE_KEY`
+- GPG public key uploaded to your GitHub account (for "Verified" badge)
+
+### Troubleshooting
+
+**Commits not showing as "Verified":**
+- Ensure GPG public key is uploaded to your GitHub account
+- Verify key ID matches the private key
+
+**"No secret key" error:**
+- Check `GPG_PRIVATE_KEY` secret contains entire key including BEGIN/END lines
+- Ensure key has no passphrase (not supported)
+
+**"Signing failed" error:**
+- Verify `GPG_KEY_ID` matches the imported key
+- Check that key is valid and not expired

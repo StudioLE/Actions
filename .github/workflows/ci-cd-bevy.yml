@@ -27,6 +27,9 @@ on:
         required: false
         type: string
         default: cicd.tbxeq@passmail.com
+      sign_commits:
+        required: false
+        type: string
     secrets:
       cargo_registry_token:
         required: true
@@ -34,6 +37,12 @@ on:
         required: false
       web_repo_token:
         required: false
+      gpg_key_id:
+        required: false
+        description: 'GPG key ID for signing commits'
+      gpg_private_key:
+        required: false
+        description: 'GPG private key for signing commits'
     outputs:
       version:
         value: ${{ jobs.surveyor.outputs.version }}
@@ -111,6 +120,9 @@ jobs:
       path: latest
       copy: v${{ needs.surveyor.outputs.version }}
       message: "feat: Added ${{ needs.surveyor.outputs.version }} WebAssembly build"
+      sign: ${{ inputs.sign_commits }}
     secrets:
       repo_token: ${{ secrets.web_repo_token }}
+      gpg_key_id: ${{ secrets.gpg_key_id }}
+      gpg_private_key: ${{ secrets.gpg_private_key }}
 

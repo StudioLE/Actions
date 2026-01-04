@@ -28,9 +28,19 @@ Reusable GitHub Actions workflows for automating CI/CD pipelines for Rust and .N
 
 ### Publishing
 - `push-to-nuget.yml` - NuGet.org publishing
-- `push-to-repo.yml` - Deploy WebAssembly to web repos
+- `push-to-repo.yml` - Deploy artifacts to target repositories
+  - Optional GPG commit signing (automatically enabled when credentials provided)
+  - Requires `sign: true` input and `GPG_KEY_ID`, `GPG_PRIVATE_KEY` secrets to enable signing
+  - Keys must be in armored format with no passphrase
 - `push-to-s3.yml` - S3 deployments
 - `push-to-github-releases.yml` - Upload release artifacts
+
+### Testing
+- `test-push-to-repo.yml` - Validates push-to-repo.yml functionality
+  - Triggers on all branch commits and workflow_dispatch
+  - Pushes test files to dedicated test repository (StudioLE/ActionsTests)
+  - Verifies GPG signing and commit correctness
+  - Requires test secrets: `TESTS_REPO_TOKEN`, `GPG_PRIVATE_KEY`, `GPG_KEY_ID`
 
 ## Common Tasks
 

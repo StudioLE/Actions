@@ -1,0 +1,123 @@
+name: Test push-to-repo.yml
+
+on:
+  push:
+    branches:
+
+  workflow_dispatch:
+
+jobs:
+
+  arrange:
+    name: Arrange
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Create file
+      run: |
+        cat > example.yaml <<EOF
+        timestamp: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+        branch: ${{ github.ref_name }}
+        commit: ${{ github.sha }}
+        run_id: ${{ github.run_id }}
+        run_number: ${{ github.run_number }}
+        run_attempt: ${{ github.run_attempt }}
+        EOF
+
+    - name: Read file
+      run: cat example.yaml
+
+    - name: Create directory
+      run: mkdir example
+
+    - name: Copy file to directory
+      run: cp example.yaml example/
+
+    - name: Add file to directory
+      run: echo "Hello, world!" > example/hello.txt
+
+    - name: Upload file artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: example-file
+        path: example.yaml
+        retention-days: 1
+
+    - name: Upload directory artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: example-dir
+        path: example/
+        retention-days: 1
+
+  act:
+    name: Act
+    needs: arrange
+    uses: ./.github/workflows/push-to-repo.yml
+    with:
+      repo: StudioLE/ActionsTests
+      artifact: example-file
+      rm: ${{ github.run_id }}/${{ github.run_number }}/${{ github.run_attempt }}
+      path: ${{ github.run_id }}/${{ github.run_number }}/${{ github.run_attempt }}
+      message: "feat: Add test result for push-to-repo.yml ${{ github.run_id }}/${{ github.run_number }}/${{ github.run_attempt }}"
+      sign: true
+    secrets:
+      repo_token: ${{ secrets.TESTS_REPO_TOKEN }}
+      gpg_key_id: ${{ secrets.GPG_KEY_ID }}
+      gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+
+  assert:
+    name: Assert
+    needs: act
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        repository: StudioLE/ActionsTests
+        token: ${{ secrets.TESTS_REPO_TOKEN }}
+
+    - name: Assert file content
+      id: vars
+      run: |
+        EXAMPLE_FILE="${{ github.run_id }}/${{ github.run_number }}/${{ github.run_attempt }}/example.yaml"
+        echo "example_file=$EXAMPLE_FILE" >> $GITHUB_OUTPUT
+
+    - name: Assert file exists
+      run: |
+        if [ ! -f "${{ steps.vars.outputs.example_file }}" ]
+        then
+          echo "ERROR: File does not exist: ${{ steps.vars.outputs.example_file }}"
+          exit 1
+        fi
+        echo "✓ File exists"
+
+    - name: Read file
+      run: cat "${{ steps.vars.outputs.example_file }}"
+
+    - name: Assert file content
+      run: |
+        if ! grep -q "commit: ${{ github.sha }}" ${{ steps.vars.outputs.example_file }}
+        then
+          echo "ERROR: File does not contain commit SHA"
+          exit 1
+        fi
+        echo "✓ File content is correct"
+
+    - name: Verify commit is signed
+      run: |
+        if ! git log -1 --show-signature
+        then
+          echo "ERROR: Failed to show signature"
+          exit 1
+        fi
+
+    - name: Signature details
+      run: |
+        SIGN_STATUS=$(git log -1 --format='%G?')
+        echo "Signature status: $SIGN_STATUS"
+        echo "Signer: $(git log -1 --format='%GS')"
+        echo "Key ID: $(git log -1 --format='%GK')"
+
+        echo "✓ Commit is GPG signed"

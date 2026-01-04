@@ -19,9 +19,18 @@ on:
       brew_formula:
         required: true
         type: string
+      sign_commits:
+        required: false
+        type: string
     secrets:
       brew_repo_token:
         required: true
+      gpg_key_id:
+        required: false
+        description: 'GPG key ID for signing commits'
+      gpg_private_key:
+        required: false
+        description: 'GPG private key for signing commits'
 
 jobs:
 
@@ -104,5 +113,8 @@ jobs:
       artifact: ${{ inputs.binary_name }}.rb
       path: Formula
       message: "feat: Update `${{ inputs.binary_name }}` to `v${{ inputs.version }}`"
+      sign: ${{ inputs.sign_commits }}
     secrets:
       repo_token: ${{ secrets.brew_repo_token }}
+      gpg_key_id: ${{ secrets.gpg_key_id }}
+      gpg_private_key: ${{ secrets.gpg_private_key }}

@@ -34,6 +34,9 @@ on:
       documentation_section:
         required: false
         type: string
+      sign_commits:
+        required: false
+        type: string
     secrets:
       packages_token:
         required: true
@@ -45,6 +48,12 @@ on:
         required: true
       nuget_token:
         required: true
+      gpg_key_id:
+        required: false
+        description: 'GPG key ID for signing commits'
+      gpg_private_key:
+        required: false
+        description: 'GPG private key for signing commits'
     outputs:
       version:
         value: ${{ jobs.release.outputs.version }}
@@ -202,8 +211,11 @@ jobs:
       rm: "${{ github.repository }}/${{ github.run_id }}"
       path: "${{ github.repository }}/${{ github.run_id }}"
       message: "feat(${{ github.repository }}): Added test results for ${{ github.sha }}"
+      sign: ${{ inputs.sign_commits }}
     secrets:
       repo_token: ${{ secrets.tests_token }}
+      gpg_key_id: ${{ secrets.gpg_key_id }}
+      gpg_private_key: ${{ secrets.gpg_private_key }}
 
   push-tests-windows:
     name: Test Results
@@ -218,8 +230,11 @@ jobs:
       rm: ""
       path: "${{ github.repository }}/${{ github.run_id }}/windows"
       message: "feat(${{ github.repository }}): Added windows test results for ${{ github.sha }}"
+      sign: ${{ inputs.sign_commits }}
     secrets:
       repo_token: ${{ secrets.tests_token }}
+      gpg_key_id: ${{ secrets.gpg_key_id }}
+      gpg_private_key: ${{ secrets.gpg_private_key }}
 
   push-packages:
     name: GitHub
@@ -283,8 +298,11 @@ jobs:
       artifact: Documentation
       path: ""
       message: "feat(${{ inputs.documentation_section }}): Added documentation for v${{ needs.release.outputs.version }}"
+      sign: ${{ inputs.sign_commits }}
     secrets:
       repo_token: ${{ secrets.documentation_token }}
+      gpg_key_id: ${{ secrets.gpg_key_id }}
+      gpg_private_key: ${{ secrets.gpg_private_key }}
 
   environment:
     name: Environment

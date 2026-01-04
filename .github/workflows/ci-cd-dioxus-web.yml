@@ -16,9 +16,18 @@ on:
       web_repo_name:
         required: false
         type: string
+      sign_commits:
+        required: false
+        type: string
     secrets:
       web_repo_token:
         required: true
+      gpg_key_id:
+        required: false
+        description: 'GPG key ID for signing commits'
+      gpg_private_key:
+        required: false
+        description: 'GPG private key for signing commits'
     outputs:
       version:
         value: ${{ jobs.surveyor.outputs.version }}
@@ -80,8 +89,11 @@ jobs:
       path: latest
       copy: v${{ needs.surveyor.outputs.version }}
       message: "feat: Added ${{ needs.surveyor.outputs.version }} WebAssembly build"
+      sign: ${{ inputs.sign_commits }}
     secrets:
       repo_token: ${{ secrets.web_repo_token }}
+      gpg_key_id: ${{ secrets.gpg_key_id }}
+      gpg_private_key: ${{ secrets.gpg_private_key }}
 
   environment:
     name: Environment

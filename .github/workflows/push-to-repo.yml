@@ -34,14 +34,23 @@ on:
       user_name:
         required: false
         type: string
-        default: ${{ github.actor }}
+        default: StudioLE Bot
       user_email:
         required: false
         type: string
-        default: ${{ github.actor }}@users.noreply.github.com
+        default: bot@studiole.uk
+      sign:
+        required: false
+        type: string
     secrets:
       repo_token:
         required: true
+      gpg_key_id:
+        required: false
+        description: 'GPG key ID for signing commits'
+      gpg_private_key:
+        required: false
+        description: 'GPG private key for signing commits'
 
 jobs:
 
@@ -60,6 +69,28 @@ jobs:
         repository: ${{ inputs.repo }}
         ref: ${{ inputs.ref }}
         token: ${{ secrets.repo_token }}
+
+    - name: Configure GPG for non-interactive use
+      if: inputs.sign == 'true'
+      run: |
+        mkdir -p ~/.gnupg
+        chmod 700 ~/.gnupg
+        echo "use-agent" > ~/.gnupg/gpg.conf
+        echo "pinentry-mode loopback" >> ~/.gnupg/gpg.conf
+
+    - name: Import GPG key
+      if: inputs.sign == 'true'
+      run: |
+        echo "${{ secrets.gpg_private_key }}" | gpg --batch --import
+        echo "Imported GPG key successfully"
+        gpg --list-secret-keys --keyid-format=long
+
+    - name: Configure git to use GPG signing
+      if: inputs.sign == 'true'
+      run: |
+        git config user.signingkey "${{ secrets.gpg_key_id }}"
+        git config commit.gpgsign true
+        git config gpg.program gpg
 
     - name: Remove
       if: inputs.rm != ''
@@ -83,6 +114,12 @@ jobs:
       run: |
         git config user.name "${{ inputs.user_name }}"
         git config user.email "${{ inputs.user_email }}"
+
+        if [ "${{ inputs.sign }}" == "true" ]
+        then
+          echo "GPG signing enabled with key: ${{ secrets.gpg_key_id }}"
+        fi
+
         git add --all
         git commit --allow-empty -m "$(cat <<'EOF'
         ${{ inputs.message }}
@@ -95,3 +132,19 @@ jobs:
     - name: Push
       run: git push
 
+    - name: Cleanup GPG
+      if: always() && inputs.sign == 'true'
+      run: |
+        # Remove imported GPG keys from runner
+        gpg --batch --yes --delete-secret-keys "${{ secrets.gpg_key_id }}" 2>/dev/null || true
+        gpg --batch --yes --delete-keys "${{ secrets.gpg_key_id }}" 2>/dev/null || true
+
+        # Kill GPG agent
+        gpgconf --kill gpg-agent 2>/dev/null || true
+
+        # Securely shred GPG directory (defense-in-depth)
+        if command -v shred >/dev/null 2>&1
+        then
+          find ~/.gnupg -type f -exec shred -vfz -n 3 {} \;
+        fi
+        rm -rf ~/.gnupg
