@@ -130,7 +130,7 @@ jobs:
 
   brew:
     name: Brew
-    if: needs.surveyor.outputs.type == 'release' && inputs.brew_repo != ''
+    if: needs.surveyor.outputs.type == 'release' && inputs.brew_repo != '' && inputs.brew_formula != ''
     uses: StudioLE/Actions/.github/workflows/brew-release.yml@v7
     needs:
     - surveyor
