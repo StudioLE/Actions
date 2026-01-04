@@ -5,17 +5,18 @@ Reusable GitHub Actions workflows for automating CI/CD pipelines for Rust and .N
 
 ### Main Workflow Types
 - **`.NET`**: Full CI/CD with tests, docs, NuGet publishing, Docker
+- **`Rust`**: General-purpose Rust CI/CD for fullstack apps, CLI tools, and libraries
 - **`Bevy`** (Rust): Game engine builds with WebAssembly support
 - **`Dioxus Web`** (Rust): WebAssembly-only builds
-- **`Dioxus Fullstack`** (Rust): Server + client builds with Docker
 
 ## Key Workflows
 
 ### Core Orchestrators
 - `ci-cd.yml` - .NET master workflow
+- `ci-cd-rust.yml` - General-purpose Rust projects (CLI tools, fullstack apps, libraries)
 - `ci-cd-bevy.yml` - Bevy Rust projects
 - `ci-cd-dioxus-web.yml` - Dioxus WebAssembly
-- `ci-cd-dioxus-fullstack.yml` - Dioxus fullstack apps
+- `ci-cd-dioxus-fullstack.yml` - Wrapper for `ci-cd-rust.yml` (backward compatibility)
 
 ### Reusable Components
 - `surveyor-release.yml` - Version detection and release notes

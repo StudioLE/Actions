@@ -81,129 +81,29 @@ on:
         required: false
     outputs:
       version:
-        value: ${{ jobs.surveyor.outputs.version }}
+        value: ${{ jobs.rust.outputs.version }}
       environment:
-        value: ${{ jobs.surveyor.outputs.environment }}
+        value: ${{ jobs.rust.outputs.environment }}
       type:
-        value: ${{ jobs.surveyor.outputs.type }}
+        value: ${{ jobs.rust.outputs.type }}
 
 jobs:
 
-  surveyor:
-    name: Surveyor
-    uses: StudioLE/Actions/.github/workflows/rust-surveyor.yml@v7
-
-  cargo-build:
-    name: Cargo Build
-    uses: StudioLE/Actions/.github/workflows/cargo-build.yml@v7
-    needs:
-    - surveyor
+  rust:
+    name: CI/CD
+    uses: StudioLE/Actions/.github/workflows/ci-cd-rust.yml@v7
     with:
-      version: ${{ needs.surveyor.outputs.version }}
       package_name: ${{ inputs.package_name }}
       binary_name: ${{ inputs.binary_name }}
       run_before_test: ${{ inputs.run_before_test }}
       test_args: ${{ inputs.test_args }}
+      docker_name: ${{ inputs.docker_name }}
+      docker_args: ${{ inputs.docker_args }}
+      cargo_publish: ${{ inputs.cargo_publish }}
       matrix: ${{ inputs.matrix }}
-
-  git-tag:
-    name: Tag
-    if: needs.surveyor.outputs.type == 'prerelease'
-    uses: StudioLE/Actions/.github/workflows/git-tag.yml@v7
-    needs:
-    - surveyor
-    - cargo-build
-    with:
-      version: ${{ needs.surveyor.outputs.version }}
-
-  github-release:
-    name: Release
-    if: needs.surveyor.outputs.type == 'release'
-    uses: StudioLE/Actions/.github/workflows/github-release.yml@v7
-    needs:
-    - surveyor
-    - cargo-build
-    with:
-      type: ${{ needs.surveyor.outputs.type }}
-      version: ${{ needs.surveyor.outputs.version }}
-      binary_name: ${{ inputs.binary_name }}
-
-  brew:
-    name: Brew
-    if: needs.surveyor.outputs.type == 'release' && inputs.brew_repo != '' && inputs.brew_formula != ''
-    uses: StudioLE/Actions/.github/workflows/brew-release.yml@v7
-    needs:
-    - surveyor
-    - github-release
-    with:
-      version: ${{ needs.surveyor.outputs.version }}
-      binary_name: ${{ inputs.binary_name }}
       brew_repo: ${{ inputs.brew_repo }}
       brew_formula: ${{ inputs.brew_formula }}
     secrets:
-      brew_repo_token: ${{ secrets.brew_repo_token }}
-
-  cargo-publish:
-    name: Cargo Publish
-    if: needs.surveyor.outputs.type == 'release' && inputs.cargo_publish == 'true'
-    uses: StudioLE/Actions/.github/workflows/cargo-publish.yml@v7
-    needs:
-    - github-release
-    secrets:
       cargo_registry_token: ${{ secrets.cargo_registry_token }}
-
-  docker-build:
-    name: Docker Build
-    if: github.ref_type == 'branch' && contains(fromJSON('["main", "alpha", "beta", "release"]'), github.ref_name) && inputs.docker_name != ''
-    uses: StudioLE/Actions/.github/workflows/docker-build.yml@v7
-    needs:
-    - surveyor
-    with:
-      version: ${{ needs.surveyor.outputs.version }}
-      name: ${{ inputs.docker_name }}
-      user: studiole
-      args: ${{ inputs.docker_args }}
-    secrets:
-      password: ${{ secrets.docker_password }}
-
-  docker-push-prerelease:
-    name: Docker Prerelease
-    if: needs.surveyor.outputs.type == 'prerelease'
-    needs:
-    - surveyor
-    - docker-build
-    uses: StudioLE/Actions/.github/workflows/docker-push.yml@v7
-    with:
-      name: ${{ inputs.docker_name }}
-      user: studiole
-      version: ${{ needs.surveyor.outputs.version }}
-      tag: alpha
-    secrets:
-      password: ${{ secrets.docker_password }}
-
-  docker-push-release:
-    name: Docker Release
-    if: needs.surveyor.outputs.type == 'release'
-    needs:
-    - surveyor
-    - docker-build
-    uses: StudioLE/Actions/.github/workflows/docker-push.yml@v7
-    with:
-      name: ${{ inputs.docker_name }}
-      user: studiole
-      version: ${{ needs.surveyor.outputs.version }}
-      tag: latest
-    secrets:
-      password: ${{ secrets.docker_password }}
-
-  environment:
-    name: Environment
-    if: needs.surveyor.outputs.environment != ''
-    needs:
-    - surveyor
-    - cargo-build
-    runs-on: ubuntu-latest
-    environment: ${{ needs.surveyor.outputs.environment }}
-    steps:
-    - run: |
-        echo "Environment: ${{ needs.surveyor.outputs.environment }}"
+      docker_password: ${{ secrets.docker_password }}
+      brew_repo_token: ${{ secrets.brew_repo_token }}
