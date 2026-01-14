@@ -1,0 +1,99 @@
+name: CI/CD
+
+on:
+  workflow_call:
+    inputs:
+      package_name:
+        required: false
+        type: string
+      run_before_test:
+        required: false
+        type: string
+      test_args:
+        required: false
+        type: string
+      check_args:
+        required: false
+        type: string
+      matrix:
+        required: false
+        type: string
+        default: |
+          [
+            {
+              "target": "x86_64-unknown-linux-gnu",
+              "os": "ubuntu-24.04",
+              "test": true
+            }
+          ]
+    secrets:
+      cargo_registry_token:
+        required: true
+    outputs:
+      version:
+        value: ${{ jobs.surveyor.outputs.version }}
+      environment:
+        value: ${{ jobs.surveyor.outputs.environment }}
+      type:
+        value: ${{ jobs.surveyor.outputs.type }}
+
+jobs:
+
+  surveyor:
+    name: Surveyor
+    uses: StudioLE/Actions/.github/workflows/rust-surveyor.yml@v7
+
+  cargo-build:
+    name: Cargo Build
+    uses: StudioLE/Actions/.github/workflows/cargo-build.yml@v7
+    needs:
+    - surveyor
+    with:
+      version: ${{ needs.surveyor.outputs.version }}
+      package_name: ${{ inputs.package_name }}
+      run_before_test: ${{ inputs.run_before_test }}
+      test_args: ${{ inputs.test_args }}
+      check_args: ${{ inputs.check_args }}
+      matrix: ${{ inputs.matrix }}
+
+  git-tag:
+    name: Tag
+    if: needs.surveyor.outputs.type == 'prerelease'
+    uses: StudioLE/Actions/.github/workflows/git-tag.yml@v7
+    needs:
+    - surveyor
+    - cargo-build
+    with:
+      version: ${{ needs.surveyor.outputs.version }}
+
+  github-release:
+    name: Release
+    if: needs.surveyor.outputs.type == 'release'
+    uses: StudioLE/Actions/.github/workflows/github-release.yml@v7
+    needs:
+    - surveyor
+    - cargo-build
+    with:
+      type: ${{ needs.surveyor.outputs.type }}
+      version: ${{ needs.surveyor.outputs.version }}
+
+  cargo-publish:
+    name: Cargo Publish
+    if: needs.surveyor.outputs.type == 'release'
+    uses: StudioLE/Actions/.github/workflows/cargo-publish.yml@v7
+    needs:
+    - github-release
+    secrets:
+      cargo_registry_token: ${{ secrets.cargo_registry_token }}
+
+  environment:
+    name: Environment
+    if: needs.surveyor.outputs.environment != ''
+    needs:
+    - surveyor
+    - cargo-build
+    runs-on: ubuntu-latest
+    environment: ${{ needs.surveyor.outputs.environment }}
+    steps:
+    - run: |
+        echo "Environment: ${{ needs.surveyor.outputs.environment }}"
