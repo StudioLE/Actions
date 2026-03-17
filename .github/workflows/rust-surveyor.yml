@@ -124,7 +124,7 @@ jobs:
 
     - name: Set Version
       if: steps.set-version.outputs.version != ''
-      run: /home/linuxbrew/.linuxbrew/bin/cargo-set-version set-version ${{ steps.surveyor.outputs.version }}
+      run: /home/linuxbrew/.linuxbrew/bin/cargo-set-version set-version ${{ steps.set-version.outputs.version }}
 
     - name: Git Diff
       run: git --no-pager diff --color
