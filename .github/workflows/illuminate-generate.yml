@@ -70,9 +70,9 @@ jobs:
 
         if [[ "${LATEST_VERSION}" == "" ]]
         then
-          echo "version=" >> $GITHUB_OUTPUT
+          echo "version=" >> "$GITHUB_OUTPUT"
         else
-          echo "version=${LATEST_VERSION}" >> $GITHUB_OUTPUT
+          echo "version=${LATEST_VERSION}" >> "$GITHUB_OUTPUT"
         fi
 
     - name: Build

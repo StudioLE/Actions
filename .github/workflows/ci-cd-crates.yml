@@ -82,6 +82,7 @@ jobs:
     if: needs.surveyor.outputs.type == 'release'
     uses: StudioLE/Actions/.github/workflows/cargo-publish.yml@v7
     needs:
+    - surveyor
     - github-release
     secrets:
       cargo_registry_token: ${{ secrets.cargo_registry_token }}

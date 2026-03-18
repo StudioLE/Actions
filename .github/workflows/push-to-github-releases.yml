@@ -38,15 +38,15 @@ jobs:
         name: ${{ inputs.artifact }}
 
     - name: List
-      run: ls -R1 ${{ inputs.path }}
+      run: ls -R1
 
     - name: Rename File
       if: inputs.file == 'true'
-      run: mv * "${{ inputs.name }}"
+      run: mv -- * "${{ inputs.name }}"
 
     - name: Create Archive
       if: inputs.file != 'true'
-      run: zip -r -9 "${{ inputs.name }}.zip" *
+      run: zip -r -9 "${{ inputs.name }}.zip" -- *
 
     - name: Upload File
       if: inputs.version != '' && inputs.file == 'true'

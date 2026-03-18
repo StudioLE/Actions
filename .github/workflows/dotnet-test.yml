@@ -86,9 +86,10 @@ jobs:
 
     - name: Update Summary
       run: |
-        echo "[Test Results](https://studiole.github.io/Tests/${{ github.repository }}/${{ github.run_id }})" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "[![Coverage](https://studiole.github.io/Tests/${{ github.repository }}/${{ github.run_id }}/coverage.svg)](https://studiole.github.io/Tests/${{ github.repository }}/${{ github.run_id }}/coverage)" >> $GITHUB_STEP_SUMMARY
+        # shellcheck disable=SC2129
+        echo "[Test Results](https://studiole.github.io/Tests/${{ github.repository }}/${{ github.run_id }})" >> "$GITHUB_STEP_SUMMARY"
+        echo "" >> "$GITHUB_STEP_SUMMARY"
+        echo "[![Coverage](https://studiole.github.io/Tests/${{ github.repository }}/${{ github.run_id }}/coverage.svg)](https://studiole.github.io/Tests/${{ github.repository }}/${{ github.run_id }}/coverage)" >> "$GITHUB_STEP_SUMMARY"
 
     - name: Test
       run: >
@@ -129,7 +130,7 @@ jobs:
 
     - name: Update Summary
       run: |
-        cat artifacts/tests/coverage/SummaryGithub.md | tail -n +2 >> $GITHUB_STEP_SUMMARY
+        cat artifacts/tests/coverage/SummaryGithub.md | tail -n +2 >> "$GITHUB_STEP_SUMMARY"
 
     - name: List Test Results
       if: always()

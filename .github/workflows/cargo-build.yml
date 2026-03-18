@@ -151,7 +151,7 @@ jobs:
       id: artifact
       run: |
         ARTIFACT="${{ inputs.binary_name }}-${{ inputs.version }}-${{ matrix.target }}"
-        echo "name=${ARTIFACT}" >> $GITHUB_OUTPUT
+        echo "name=${ARTIFACT}" >> "$GITHUB_OUTPUT"
 
     - name: Set binary extension
       if: inputs.binary_name != ''
@@ -159,9 +159,9 @@ jobs:
       run: |
         if [[ "$RUNNER_OS" == "Windows" ]]
         then
-          echo "extension=.exe" >> $GITHUB_OUTPUT
+          echo "extension=.exe" >> "$GITHUB_OUTPUT"
         else
-          echo "extension=" >> $GITHUB_OUTPUT
+          echo "extension=" >> "$GITHUB_OUTPUT"
         fi
 
     - name: Copy binary

@@ -193,7 +193,7 @@ jobs:
       id: artifact
       run: |
         ARTIFACT="${{ inputs.binary_name }}-${{ inputs.version }}-${{ matrix.target }}"
-        echo "name=${ARTIFACT}" >> $GITHUB_OUTPUT
+        echo "name=${ARTIFACT}" >> "$GITHUB_OUTPUT"
 
     - name: Create archive
       run: >

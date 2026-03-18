@@ -45,7 +45,7 @@ jobs:
           buildx-
 
     - name: Set Docker Image
-      run: echo "DOCKER_IMAGE=${{ inputs.registry }}/${{ inputs.user }}/${{ inputs.name }}" >> $GITHUB_ENV
+      run: echo "DOCKER_IMAGE=${{ inputs.registry }}/${{ inputs.user }}/${{ inputs.name }}" >> "$GITHUB_ENV"
 
     - name: Login
       run: echo "$PW" | docker login ${{ inputs.registry }} -u ${{ inputs.user }} --password-stdin
@@ -58,7 +58,7 @@ jobs:
     - name: Build
       run: >
         docker buildx build .
-        --tag $DOCKER_IMAGE:${{ github.sha }}
+        --tag "$DOCKER_IMAGE":${{ github.sha }}
         --cache-from=type=local,src=/tmp/.buildx-cache
         --cache-to=type=local,dest=/tmp/.buildx-cache-new,mode=max
         --push

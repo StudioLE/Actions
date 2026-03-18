@@ -76,22 +76,23 @@ jobs:
 
         if [[ "${LATEST_VERSION}" == "" ]]
         then
-          echo "version=" >> $GITHUB_OUTPUT
+          echo "version=" >> "$GITHUB_OUTPUT"
         else
-          echo "version=${LATEST_VERSION}" >> $GITHUB_OUTPUT
+          echo "version=${LATEST_VERSION}" >> "$GITHUB_OUTPUT"
         fi
 
     - name: Determine Type
       id: set-type
       run: |
+        # shellcheck disable=SC2193
         if [[ "${{ steps.set-version.outputs.version }}" == *"-"* ]]
         then
-          echo "type=prerelease" >> $GITHUB_OUTPUT
+          echo "type=prerelease" >> "$GITHUB_OUTPUT"
         elif [[ -n "${{ steps.set-version.outputs.version }}" ]]
         then
-          echo "type=release" >> $GITHUB_OUTPUT
+          echo "type=release" >> "$GITHUB_OUTPUT"
         else
-          echo "type=" >> $GITHUB_OUTPUT
+          echo "type=" >> "$GITHUB_OUTPUT"
         fi
 
     - name: Create Release Notes
@@ -129,18 +130,18 @@ jobs:
       run: |
         if [[ "${{ github.ref_name }}" == "main" ]]
         then
-          echo "environment=Development" >> $GITHUB_OUTPUT
+          echo "environment=Development" >> "$GITHUB_OUTPUT"
         elif [[ "${{ github.ref_name }}" == "alpha" ]]
         then
-          echo "environment=Development" >> $GITHUB_OUTPUT
+          echo "environment=Development" >> "$GITHUB_OUTPUT"
         elif [[ "${{ github.ref_name }}" == "beta" ]]
         then
-          echo "environment=Staging" >> $GITHUB_OUTPUT
+          echo "environment=Staging" >> "$GITHUB_OUTPUT"
         elif [[ "${{ github.ref_name }}" == "release" ]]
         then
-          echo "environment=Production" >> $GITHUB_OUTPUT
+          echo "environment=Production" >> "$GITHUB_OUTPUT"
         else
-          echo "environment=" >> $GITHUB_OUTPUT
+          echo "environment=" >> "$GITHUB_OUTPUT"
         fi
 
     - name: Read
