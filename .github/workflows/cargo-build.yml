@@ -86,10 +86,8 @@ jobs:
       id: cache-cargo
       uses: actions/cache/restore@v5
       with:
-        key: cargo-${{ matrix.target }}-${{ hashFiles('**/Cargo.lock') }}-${{ github.run_number }}
-        restore-keys: |
-          cargo-${{ matrix.target }}-${{ hashFiles('**/Cargo.lock') }}-
-          cargo-${{ matrix.target }}-
+        key: cargo-${{ matrix.target }}-${{ github.run_number }}
+        restore-keys: cargo-${{ matrix.target }}-
         path: |
           ~/.cargo/bin/
           ~/.cargo/registry/index/
@@ -136,8 +134,51 @@ jobs:
       env:
         PKG_CONFIG_ALLOW_CROSS: 1
 
-    - name: Save cargo cache
-      id: cargo-cache-save
+    - name: Cargo Clippy
+      if: matrix.target == 'x86_64-unknown-linux-gnu'
+      run: |
+        if ! cargo clippy --quiet --locked --all-targets --message-format short ${{ inputs.check_args }} 2>&1 | tee "$RUNNER_TEMP/clippy-output"
+        then
+          echo "::warning title=Clippy Check Failed::Please review the output for details."
+          {
+            echo '## cargo clippy'
+            echo '```'
+            cat "$RUNNER_TEMP/clippy-output"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+        fi
+
+    - name: Cargo Format
+      if: matrix.target == 'x86_64-unknown-linux-gnu'
+      run: |
+        if ! cargo fmt --check --all 2>&1 | tee "$RUNNER_TEMP/fmt-output"
+        then
+          echo "::warning title=Format Check Failed::Please review the output for details."
+          {
+            echo '## cargo fmt'
+            echo '```'
+            cat "$RUNNER_TEMP/fmt-output"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+        fi
+
+    - name: Remove Incremental Artifacts
+      if: github.ref_name == 'main'
+      run: rm -rf target/*/release/incremental
+
+    - name: Prune Cargo Cache
+      if: github.ref_name == 'main'
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        gh cache list --key cargo-${{ matrix.target }}- --json key --jq '.[].key' -R "${{ github.repository }}" |
+        while read -r key
+        do
+          gh cache delete "$key" -R "${{ github.repository }}"
+        done
+
+    - name: Save Cargo Cache
+      if: github.ref_name == 'main'
       uses: actions/cache/save@v5
       with:
         key: ${{ steps.cache-cargo.outputs.cache-primary-key }}
@@ -214,30 +255,6 @@ jobs:
     - name: cargo test
       if: matrix.test
       run: cargo test --release --locked --no-fail-fast --target ${{ matrix.target }} ${{ inputs.test_args }}
-
-    - name: cargo check
-      if: matrix.target == 'x86_64-unknown-linux-gnu'
-      run: |
-        if ! cargo check --quiet --locked --all-targets --message-format short ${{ inputs.check_args }}
-        then
-          echo "::warning title=Cargo Check Failed::Please review the output for details."
-        fi
-
-    - name: cargo clippy
-      if: matrix.target == 'x86_64-unknown-linux-gnu'
-      run: |
-        if ! cargo clippy --quiet --locked --all-targets --message-format short ${{ inputs.check_args }}
-        then
-          echo "::warning title=Clippy Check Failed::Please review the output for details."
-        fi
-
-    - name: cargo fmt
-      if: matrix.target == 'x86_64-unknown-linux-gnu'
-      run: |
-        if ! cargo fmt --check --all
-        then
-          echo "::warning title=Format Check Failed::Please review the output for details."
-        fi
 
     - name: Diff
       run: git --no-pager diff --color

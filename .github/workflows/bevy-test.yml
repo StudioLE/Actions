@@ -7,14 +7,6 @@ on:
         required: false
         type: string
         default: ubuntu-latest
-      git_user:
-        required: false
-        type: string
-        default: CI/CD
-      git_email:
-        required: false
-        type: string
-        default: cicd.tbxeq@passmail.com
 
 env:
   CARGO_TERM_COLOR: always
@@ -51,10 +43,8 @@ jobs:
       id: cargo-cache
       uses: actions/cache/restore@v5
       with:
-        key: cargo-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}-${{ github.run_number }}
-        restore-keys: |
-          cargo-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}-
-          cargo-${{ runner.os }}-
+        key: cargo-${{ runner.os }}-${{ github.run_number }}
+        restore-keys: cargo-${{ runner.os }}-
         path: |
           ~/.cargo/bin/
           ~/.cargo/registry/index/
@@ -70,8 +60,23 @@ jobs:
     - name: Cargo Build
       run: cargo build --release --locked --features bevy/dynamic_linking
 
-    - name: Cache Cargo
-      if: always()
+    - name: Remove Incremental Artifacts
+      if: github.ref_name == 'main'
+      run: rm -rf target/*/release/incremental
+
+    - name: Prune Cargo Cache
+      if: github.ref_name == 'main'
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        gh cache list --key cargo-${{ runner.os }}- --json key --jq '.[].key' -R "${{ github.repository }}" |
+        while read -r key
+        do
+          gh cache delete "$key" -R "${{ github.repository }}"
+        done
+
+    - name: Save Cargo Cache
+      if: github.ref_name == 'main'
       uses: actions/cache/save@v5
       with:
         key: ${{ steps.cargo-cache.outputs.cache-primary-key }}
@@ -82,78 +87,31 @@ jobs:
           ~/.cargo/git/db/
           target/
 
-    - name: Git Config
+    - name: Cargo Clippy
       run: |
-        git config user.name "${{ inputs.git_user }}"
-        git config user.email "${{ inputs.git_email }}"
+        if ! cargo clippy --quiet --locked --all-targets --message-format short 2>&1 | tee "$RUNNER_TEMP/clippy-output"
+        then
+          echo "::warning title=Clippy Check Failed::Please review the output for details."
+          {
+            echo '## cargo clippy'
+            echo '```'
+            cat "$RUNNER_TEMP/clippy-output"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+        fi
 
     - name: Cargo Format
       run: |
-        cargo fmt
-        git add --all -- ':!Cargo.toml' ':!Cargo.lock'
-        if ! git diff --cached --exit-code
+        if ! cargo fmt --check --all 2>&1 | tee "$RUNNER_TEMP/fmt-output"
         then
-          echo "::warning title=Cargo Format::Please review the output for details."
-          git commit -m "style: Apply code style with \`cargo fmt\`"
+          echo "::warning title=Format Check Failed::Please review the output for details."
+          {
+            echo '## cargo fmt'
+            echo '```'
+            cat "$RUNNER_TEMP/fmt-output"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
         fi
-      continue-on-error: true
-
-    - name: Restore Cargo Fix
-      id: cargo-fix-cache
-      uses: actions/cache/restore@v5
-      with:
-        key: cargo-fix-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}-${{ github.run_number }}
-        restore-keys: |
-          cargo-fix-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}-
-          cargo-fix-${{ runner.os }}-
-        path: |
-          ~/.cargo/bin/
-          ~/.cargo/registry/index/
-          ~/.cargo/registry/cache/
-          ~/.cargo/git/db/
-          target/
-
-    - name: Cargo Fix
-      run: |
-        cargo fix --all-targets --release --locked --allow-dirty --message-format short
-        cargo fmt
-        git add --all -- ':!Cargo.toml' ':!Cargo.lock'
-        if ! git diff --cached --exit-code
-        then
-          echo "::warning title=Cargo Fix::Please review the output for details."
-          git commit -m "style: Apply code style with \`cargo fix\`"
-        fi
-      continue-on-error: true
-
-    - name: Cache Fix Cargo
-      if: always()
-      uses: actions/cache/save@v5
-      with:
-        key: ${{ steps.cargo-fix-cache.outputs.cache-primary-key }}
-        path: |
-          ~/.cargo/bin/
-          ~/.cargo/registry/index/
-          ~/.cargo/registry/cache/
-          ~/.cargo/git/db/
-          target/
-
-    - name: Cargo Clippy
-      run: |
-        cargo clippy --all-targets --release --locked --fix --allow-dirty --message-format short
-        cargo fmt
-        git add --all -- ':!Cargo.toml' ':!Cargo.lock'
-        if ! git diff --cached --exit-code
-        then
-          echo "::warning title=Cargo Clippy::Please review the output for details."
-          git commit -m "style: Apply code style with \`cargo clippy --fix\`"
-        fi
-      continue-on-error: true
-
-    - name: Git Status
-      run: git status
-
-    - name: Git Push
-      run: git push
 
     - name: Cargo Test
       run: cargo test --release --locked --features bevy/dynamic_linking --no-fail-fast

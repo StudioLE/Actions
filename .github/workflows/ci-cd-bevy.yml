@@ -19,14 +19,6 @@ on:
       web_repo_name:
         required: false
         type: string
-      git_user:
-        required: false
-        type: string
-        default: CI/CD
-      git_email:
-        required: false
-        type: string
-        default: cicd.tbxeq@passmail.com
     secrets:
       cargo_registry_token:
         required: true
@@ -53,9 +45,6 @@ jobs:
     uses: StudioLE/Actions/.github/workflows/bevy-test.yml@v7
     needs:
     - surveyor
-    with:
-      git_user: ${{ inputs.git_user }}
-      git_email: ${{ inputs.git_email }}
 
   build:
     name: Build

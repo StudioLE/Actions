@@ -20,15 +20,6 @@ on:
       version:
         required: true
         type: string
-      git_user:
-        required: false
-        type: string
-        default: CI/CD
-      git_email:
-        required: false
-        type: string
-        default: cicd.tbxeq@passmail.com
-
 env:
   CARGO_TERM_COLOR: always
 
@@ -65,10 +56,8 @@ jobs:
       id: restore
       uses: actions/cache/restore@v5
       with:
-        key: dioxus-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}-${{ github.run_number }}
-        restore-keys: |
-          dioxus-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}-
-          dioxus-${{ runner.os }}-
+        key: dioxus-${{ github.run_number }}
+        restore-keys: dioxus-
         path: |
           ~/.cargo/bin/
           ~/.cargo/registry/index/
@@ -96,8 +85,49 @@ jobs:
     - name: Bundle for Web
       run: dx bundle --platform web
 
-    - name: Cache Cargo
-      if: always()
+    - name: Cargo Clippy
+      run: |
+        if ! cargo clippy --quiet --locked --all-targets --message-format short 2>&1 | tee "$RUNNER_TEMP/clippy-output"
+        then
+          echo "::warning title=Clippy Check Failed::Please review the output for details."
+          {
+            echo '## cargo clippy'
+            echo '```'
+            cat "$RUNNER_TEMP/clippy-output"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+        fi
+
+    - name: Cargo Format
+      run: |
+        if ! cargo fmt --check --all 2>&1 | tee "$RUNNER_TEMP/fmt-output"
+        then
+          echo "::warning title=Format Check Failed::Please review the output for details."
+          {
+            echo '## cargo fmt'
+            echo '```'
+            cat "$RUNNER_TEMP/fmt-output"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+        fi
+
+    - name: Remove Incremental Artifacts
+      if: github.ref_name == 'main'
+      run: rm -rf target/*/release/incremental
+
+    - name: Prune Cargo Cache
+      if: github.ref_name == 'main'
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        gh cache list --key dioxus- --json key --jq '.[].key' -R "${{ github.repository }}" |
+        while read -r key
+        do
+          gh cache delete "$key" -R "${{ github.repository }}"
+        done
+
+    - name: Save Cargo Cache
+      if: github.ref_name == 'main'
       uses: actions/cache/save@v5
       with:
         key: ${{ steps.restore.outputs.cache-primary-key }}
@@ -151,49 +181,3 @@ jobs:
       run: |
         rm -rf artifacts
         rm -f ${{ steps.artifact.outputs.name }}.tar.xz
-
-    - name: Git Config
-      run: |
-        git config user.name "${{ inputs.git_user }}"
-        git config user.email "${{ inputs.git_email }}"
-
-    - name: Cargo Format
-      run: |
-        cargo fmt
-        git add --all -- ':!Cargo.toml' ':!Cargo.lock'
-        if ! git diff --cached --exit-code
-        then
-          echo "::warning title=Cargo Format::Please review the output for details."
-          git commit -m "style: Apply code style with \`cargo fmt\`"
-        fi
-      continue-on-error: true
-
-    - name: Cargo Fix
-      run: |
-        cargo fix --release --locked --allow-dirty --all-targets --message-format short
-        cargo fmt
-        git add --all -- ':!Cargo.toml' ':!Cargo.lock'
-        if ! git diff --cached --exit-code
-        then
-          echo "::warning title=Cargo Fix::Please review the output for details."
-          git commit -m "style: Apply code style with \`cargo fix\`"
-        fi
-      continue-on-error: true
-
-    - name: Cargo Clippy
-      run: |
-        cargo clippy --release --locked --fix --allow-dirty --all-targets --message-format short
-        cargo fmt
-        git add --all -- ':!Cargo.toml' ':!Cargo.lock'
-        if ! git diff --cached --exit-code
-        then
-          echo "::warning title=Cargo Clippy::Please review the output for details."
-          git commit -m "style: Apply code style with \`cargo clippy --fix\`"
-        fi
-      continue-on-error: true
-
-    - name: Git Status
-      run: git status
-
-    - name: Git Push
-      run: git push
