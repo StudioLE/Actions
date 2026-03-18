@@ -75,11 +75,11 @@ jobs:
     steps:
 
     - name: git checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
 
     - name: Restore cargo cache
       id: cache-cargo
-      uses: actions/cache/restore@v4
+      uses: actions/cache/restore@v5
       with:
         key: cargo-${{ matrix.target }}-${{ hashFiles('**/Cargo.lock') }}-${{ github.run_number }}
         restore-keys: |
@@ -93,7 +93,7 @@ jobs:
           target/
 
     - name: Download Cargo.toml
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         name: Cargo.toml
 
@@ -133,7 +133,7 @@ jobs:
 
     - name: Save cargo cache
       id: cargo-cache-save
-      uses: actions/cache/save@v4
+      uses: actions/cache/save@v5
       with:
         key: ${{ steps.cache-cargo.outputs.cache-primary-key }}
         path: |
@@ -187,7 +187,7 @@ jobs:
         ${{ steps.artifact.outputs.name }}.tar.xz
 
     - name: Upload binary artifact
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: ${{ steps.artifact.outputs.name }}.tar.xz
         path: ${{ steps.artifact.outputs.name }}.tar.xz

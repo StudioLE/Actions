@@ -42,7 +42,7 @@ jobs:
     steps:
 
     - name: Checkout Repo
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         fetch-depth: 0
         fetch-tags: true
@@ -124,7 +124,7 @@ jobs:
       run: ls -R1 artifacts
 
     - name: Upload Artifact
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: Documentation
         path: artifacts

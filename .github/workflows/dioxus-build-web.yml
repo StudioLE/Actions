@@ -53,14 +53,14 @@ jobs:
         librsvg2-dev
 
     - name: Checkout Repo
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         fetch-depth: 0
         fetch-tags: true
 
     - name: Restore Cargo
       id: restore
-      uses: actions/cache/restore@v4
+      uses: actions/cache/restore@v5
       with:
         key: dioxus-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}-${{ github.run_number }}
         restore-keys: |
@@ -74,7 +74,7 @@ jobs:
           target/
 
     - name: Download Cargo.toml
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         name: Cargo.toml
 
@@ -95,7 +95,7 @@ jobs:
 
     - name: Cache Cargo
       if: always()
-      uses: actions/cache/save@v4
+      uses: actions/cache/save@v5
       with:
         key: ${{ steps.restore.outputs.cache-primary-key }}
         path: |
@@ -133,13 +133,13 @@ jobs:
         ${{ steps.artifact.outputs.name }}.tar.xz
 
     - name: Upload archived artifact
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: ${{ steps.artifact.outputs.name }}.tar.xz
         path: ${{ steps.artifact.outputs.name }}.tar.xz
 
     - name: Upload WebAssembly
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: ${{ inputs.artifact_name }}
         path: artifacts

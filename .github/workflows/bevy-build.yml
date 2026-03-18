@@ -83,14 +83,14 @@ jobs:
         libxkbcommon-dev
 
     - name: Checkout Repo
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         fetch-depth: 0
         fetch-tags: true
 
     - name: Restore Cargo
       id: cargo-cache
-      uses: actions/cache/restore@v4
+      uses: actions/cache/restore@v5
       with:
         key: cargo-${{ matrix.target }}-${{ hashFiles('**/Cargo.lock') }}-${{ github.run_number }}
         restore-keys: |
@@ -103,7 +103,7 @@ jobs:
           ~/.cargo/git/db/
           target/
 
-    - uses: actions/download-artifact@v4
+    - uses: actions/download-artifact@v8
       with:
         name: Cargo.toml
 
@@ -115,7 +115,7 @@ jobs:
 
     - name: Cache Cargo
       if: always()
-      uses: actions/cache/save@v4
+      uses: actions/cache/save@v5
       with:
         key: ${{ steps.cargo-cache.outputs.cache-primary-key }}
         path: |
@@ -138,7 +138,7 @@ jobs:
 
     - name: Checkout Assets
       if: matrix.target != 'wasm32-unknown-unknown' && inputs.assets_repo_name != ''
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         repository: ${{ inputs.assets_repo_name }}
         token: ${{ secrets.assets_repo_token }}
@@ -208,13 +208,13 @@ jobs:
         ${{ steps.artifact.outputs.name }}.tar.xz
 
     - name: Upload archive artifact
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: ${{ steps.artifact.outputs.name }}.tar.xz
         path: ${{ steps.artifact.outputs.name }}.tar.xz
 
     - name: Upload WebAssembly artifact
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       if: matrix.target == 'wasm32-unknown-unknown'
       with:
         name: WebAssembly

@@ -28,7 +28,7 @@ jobs:
       DOTNET_NUGET_SIGNATURE_VERIFICATION: false
     steps:
 
-    - uses: actions/download-artifact@v4
+    - uses: actions/download-artifact@v8
       with:
         name: Packages
 

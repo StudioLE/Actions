@@ -42,7 +42,7 @@ jobs:
     steps:
 
     - name: Checkout Repo
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         fetch-depth: 0
         fetch-tags: true
@@ -139,7 +139,7 @@ jobs:
 
     - name: Upload Test Results
       if: always()
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: Tests-${{ runner.os }}-${{ runner.arch }}
         path: artifacts/tests
@@ -166,7 +166,7 @@ jobs:
 
     - name: Upload Packages
       if: inputs.pack == 'true'
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: Packages
         path: artifacts/packages

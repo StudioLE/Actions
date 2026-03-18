@@ -33,10 +33,10 @@ jobs:
     runs-on: ${{ inputs.os }}
     steps:
 
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
 
     - name: Download release notes
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         name: ${{ inputs.notes_artifact }}
 
@@ -68,7 +68,7 @@ jobs:
 
     - name: Download binaries
       if: inputs.binary_name != ''
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         pattern: ${{ inputs.binary_name }}-${{ inputs.version }}-*
         merge-multiple: true
