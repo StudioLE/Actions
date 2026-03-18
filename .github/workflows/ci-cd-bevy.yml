@@ -15,7 +15,7 @@ on:
       wasm_bindgen_version:
         required: false
         type: string
-        default: 0.2.105
+        default: 0.2.114
       web_repo_name:
         required: false
         type: string
