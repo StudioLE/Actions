@@ -97,10 +97,10 @@ jobs:
           ~/.cargo/git/db/
           target/
 
-    - name: Download Cargo.toml
+    - name: Download Cargo Manifests
       uses: actions/download-artifact@v8
       with:
-        name: Cargo.toml
+        name: cargo-manifests
 
     - name: Diff
       run: git --no-pager diff --color
@@ -126,13 +126,13 @@ jobs:
 
     - name: cargo build
       if: inputs.package_name != ''
-      run: cargo build --release --target ${{ matrix.target }} --package ${{ inputs.package_name }}
+      run: cargo build --release --locked --target ${{ matrix.target }} --package ${{ inputs.package_name }}
       env:
         PKG_CONFIG_ALLOW_CROSS: 1
 
     - name: cargo build
       if: inputs.package_name == ''
-      run: cargo build --release --target ${{ matrix.target }}
+      run: cargo build --release --locked --target ${{ matrix.target }}
       env:
         PKG_CONFIG_ALLOW_CROSS: 1
 
@@ -213,12 +213,12 @@ jobs:
 
     - name: cargo test
       if: matrix.test
-      run: cargo test --release --no-fail-fast --target ${{ matrix.target }} ${{ inputs.test_args }}
+      run: cargo test --release --locked --no-fail-fast --target ${{ matrix.target }} ${{ inputs.test_args }}
 
     - name: cargo check
       if: matrix.target == 'x86_64-unknown-linux-gnu'
       run: |
-        if ! cargo check --quiet --all-targets --message-format short ${{ inputs.check_args }}
+        if ! cargo check --quiet --locked --all-targets --message-format short ${{ inputs.check_args }}
         then
           echo "::warning title=Cargo Check Failed::Please review the output for details."
         fi
@@ -226,7 +226,7 @@ jobs:
     - name: cargo clippy
       if: matrix.target == 'x86_64-unknown-linux-gnu'
       run: |
-        if ! cargo clippy --quiet --all-targets --message-format short ${{ inputs.check_args }}
+        if ! cargo clippy --quiet --locked --all-targets --message-format short ${{ inputs.check_args }}
         then
           echo "::warning title=Clippy Check Failed::Please review the output for details."
         fi

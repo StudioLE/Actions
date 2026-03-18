@@ -62,12 +62,13 @@ jobs:
           ~/.cargo/git/db/
           target/
 
-    - uses: actions/download-artifact@v8
+    - name: Download Cargo Manifests
+      uses: actions/download-artifact@v8
       with:
-        name: Cargo.toml
+        name: cargo-manifests
 
     - name: Cargo Build
-      run: cargo build --release --features bevy/dynamic_linking
+      run: cargo build --release --locked --features bevy/dynamic_linking
 
     - name: Cache Cargo
       if: always()
@@ -114,7 +115,7 @@ jobs:
 
     - name: Cargo Fix
       run: |
-        cargo fix --all-targets --release --allow-dirty --message-format short
+        cargo fix --all-targets --release --locked --allow-dirty --message-format short
         cargo fmt
         git add --all -- ':!Cargo.toml' ':!Cargo.lock'
         if ! git diff --cached --exit-code
@@ -138,7 +139,7 @@ jobs:
 
     - name: Cargo Clippy
       run: |
-        cargo clippy --all-targets --release --fix --allow-dirty --message-format short
+        cargo clippy --all-targets --release --locked --fix --allow-dirty --message-format short
         cargo fmt
         git add --all -- ':!Cargo.toml' ':!Cargo.lock'
         if ! git diff --cached --exit-code
@@ -155,4 +156,4 @@ jobs:
       run: git push
 
     - name: Cargo Test
-      run: cargo test --release --features bevy/dynamic_linking --no-fail-fast
+      run: cargo test --release --locked --features bevy/dynamic_linking --no-fail-fast

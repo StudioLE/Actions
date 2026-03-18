@@ -138,11 +138,13 @@ jobs:
     - name: Git Diff
       run: git --no-pager diff --color
 
-    - name: Upload Cargo.toml
+    - name: Upload Cargo Manifests
       uses: actions/upload-artifact@v7
       with:
-        name: Cargo.toml
-        path: Cargo.toml
+        name: cargo-manifests
+        path: |
+          Cargo.toml
+          Cargo.lock
 
     - name: Determine Environment
       id: set-environment
