@@ -119,6 +119,14 @@ jobs:
         name: ${{ inputs.notes_artifact }}
         path: artifacts/${{ inputs.notes_file }}
 
+    - name: Write Version to Step Summary
+      if: steps.set-version.outputs.version != ''
+      run: echo "# ${{ steps.set-version.outputs.version }}" >> "$GITHUB_STEP_SUMMARY"
+
+    - name: Write Release Notes to Step Summary
+      if: steps.set-version.outputs.version != ''
+      run: cat artifacts/${{ inputs.notes_file }} >> "$GITHUB_STEP_SUMMARY"
+
     - name: Install cargo-edit
       if: steps.set-version.outputs.version != ''
       run: /home/linuxbrew/.linuxbrew/bin/brew install cargo-edit

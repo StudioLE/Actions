@@ -27,6 +27,9 @@ on:
       assets_repo_token:
         required: false
 
+env:
+  CARGO_TERM_COLOR: always
+
 jobs:
 
   build:

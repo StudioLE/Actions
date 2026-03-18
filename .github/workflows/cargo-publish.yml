@@ -1,4 +1,5 @@
 name: Cargo Publish
+
 on:
   workflow_call:
     inputs:
@@ -9,6 +10,10 @@ on:
     secrets:
       cargo_registry_token:
         required: true
+
+env:
+  CARGO_TERM_COLOR: always
+
 jobs:
 
   cargo-publish:
