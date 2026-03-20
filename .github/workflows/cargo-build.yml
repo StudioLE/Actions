@@ -194,6 +194,7 @@ jobs:
       run: mkdir artifacts
 
     - name: Set artifact name
+      if: inputs.binary_name != ''
       id: artifact
       run: |
         ARTIFACT="${{ inputs.binary_name }}-${{ inputs.version }}-${{ matrix.target }}"
@@ -221,6 +222,7 @@ jobs:
       run: ls -R1 artifacts
 
     - name: Create archive
+      if: inputs.binary_name != ''
       run: >
         tar cJvf
         ${{ steps.artifact.outputs.name }}.tar.xz
@@ -228,17 +230,20 @@ jobs:
         .
 
     - name: Verify archive
+      if: inputs.binary_name != ''
       run: >
         tar tvf
         ${{ steps.artifact.outputs.name }}.tar.xz
 
     - name: Upload binary artifact
+      if: inputs.binary_name != ''
       uses: actions/upload-artifact@v7
       with:
         name: ${{ steps.artifact.outputs.name }}.tar.xz
         path: ${{ steps.artifact.outputs.name }}.tar.xz
 
     - name: Remove artifacts
+      if: inputs.binary_name != ''
       run: |
         rm -rf artifacts
         rm -f ${{ steps.artifact.outputs.name }}.tar.xz
