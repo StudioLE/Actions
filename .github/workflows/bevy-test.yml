@@ -58,7 +58,7 @@ jobs:
         name: cargo-manifests
 
     - name: Cargo Build
-      run: cargo build --release --locked --features bevy/dynamic_linking
+      run: cargo build --release --locked --workspace --features bevy/dynamic_linking
 
     - name: Remove Incremental Artifacts
       if: github.ref_name == 'main'
@@ -89,7 +89,7 @@ jobs:
 
     - name: Cargo Clippy
       run: |
-        if ! cargo clippy --quiet --locked --all-targets --message-format short 2>&1 | tee "$RUNNER_TEMP/clippy-output"
+        if ! cargo clippy --quiet --release --locked --workspace --all-targets --features bevy/dynamic_linking --message-format short 2>&1 | tee "$RUNNER_TEMP/clippy-output"
         then
           echo "::warning title=Clippy Check Failed::Please review the output for details."
           {
@@ -114,4 +114,4 @@ jobs:
         fi
 
     - name: Cargo Test
-      run: cargo test --release --locked --features bevy/dynamic_linking --no-fail-fast
+      run: cargo test --release --locked --workspace --features bevy/dynamic_linking --no-fail-fast
