@@ -34,6 +34,14 @@ on:
       documentation_section:
         required: false
         type: string
+      nuget:
+        required: false
+        type: boolean
+        default: true
+        description: |
+          Push release packages to nuget.org.
+
+          - If false, nuget_token is not needed
     secrets:
       packages_token:
         required: true
@@ -45,7 +53,7 @@ on:
       documentation_token:
         required: true
       nuget_token:
-        required: true
+        required: false
     outputs:
       version:
         value: ${{ jobs.release.outputs.version }}
@@ -204,7 +212,7 @@ jobs:
 
   push-nuget:
     name: NuGet
-    if: needs.release.outputs.type == 'release'
+    if: needs.release.outputs.type == 'release' && inputs.nuget
     needs:
     - release
     uses: StudioLE/Actions/.github/workflows/push-to-nuget.yml@v7
