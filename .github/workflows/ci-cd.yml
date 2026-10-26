@@ -281,7 +281,7 @@ jobs:
     with:
       repo: StudioLE/Documentation
       artifact: Documentation
-      path: ""
+      path: .
       message: "feat(${{ inputs.documentation_section }}): Added documentation for v${{ needs.release.outputs.version }}"
     secrets:
       repo_token: ${{ secrets.documentation_token }}
