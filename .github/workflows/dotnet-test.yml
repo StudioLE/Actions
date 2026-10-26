@@ -84,13 +84,6 @@ jobs:
     - name: Make Directory
       run: mkdir -p artifacts/tests
 
-    - name: Update Summary
-      run: |
-        # shellcheck disable=SC2129
-        echo "[Test Results](https://studiole.github.io/Tests/${{ github.repository }}/${{ github.run_id }})" >> "$GITHUB_STEP_SUMMARY"
-        echo "" >> "$GITHUB_STEP_SUMMARY"
-        echo "[![Coverage](https://studiole.github.io/Tests/${{ github.repository }}/${{ github.run_id }}/coverage.svg)](https://studiole.github.io/Tests/${{ github.repository }}/${{ github.run_id }}/coverage)" >> "$GITHUB_STEP_SUMMARY"
-
     - name: Test
       run: >
         dotnet test "${{ inputs.project }}"

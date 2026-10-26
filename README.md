@@ -13,10 +13,6 @@ flowchart TD
         Run tests on Linux]:::TEST
         test-windows[*test-windows*
         Run tests on Windows]:::TEST
-        push-tests[*push-tests*
-        Publish Linux test results]:::PUSH
-        push-tests-windows[*push-tests-windows*
-        Publish Windows test results]:::PUSH
     end
 
     subgraph CLI[CLI Binaries]
@@ -75,10 +71,6 @@ flowchart TD
 
     docker-build --> docker-push-prerelease
     docker-build --> docker-push-release
-
-    test-ubuntu --> push-tests
-    test-windows --> push-tests-windows
-    push-tests --> push-tests-windows
 
     %% Styling with Tailwind colors
     classDef TEST fill:#ef4444

@@ -40,7 +40,8 @@ on:
       gh_token:
         required: true
       tests_token:
-        required: true
+        required: false
+        description: Unused. Kept so callers still passing it don't fail.
       documentation_token:
         required: true
       nuget_token:
@@ -189,37 +190,6 @@ jobs:
       tag: latest
     secrets:
       password: ${{ secrets.gh_token }}
-
-  push-tests:
-    name: Test Results
-    if: always()
-    needs:
-    - test-ubuntu
-    uses: StudioLE/Actions/.github/workflows/push-to-repo.yml@v7
-    with:
-      repo: StudioLE/Tests
-      artifact: Tests-Linux-X64
-      rm: "${{ github.repository }}/${{ github.run_id }}"
-      path: "${{ github.repository }}/${{ github.run_id }}"
-      message: "feat(${{ github.repository }}): Added test results for ${{ github.sha }}"
-    secrets:
-      repo_token: ${{ secrets.tests_token }}
-
-  push-tests-windows:
-    name: Test Results
-    if: always()
-    needs:
-    - push-tests
-    - test-windows
-    uses: StudioLE/Actions/.github/workflows/push-to-repo.yml@v7
-    with:
-      repo: StudioLE/Tests
-      artifact: Tests-Windows-X64
-      rm: ""
-      path: "${{ github.repository }}/${{ github.run_id }}/windows"
-      message: "feat(${{ github.repository }}): Added windows test results for ${{ github.sha }}"
-    secrets:
-      repo_token: ${{ secrets.tests_token }}
 
   push-packages:
     name: GitHub
