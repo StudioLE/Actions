@@ -43,7 +43,7 @@ jobs:
   #
   # Artifacts:
   # - cargo-manifests: every Cargo.toml and Cargo.lock stamped with the new versions
-  # - release-notes.md: skipped for development builds
+  # - release-notes.md: notes for the commits since the previous release
   surveyor:
     name: Surveyor
     runs-on: ubuntu-latest
@@ -70,13 +70,11 @@ jobs:
       run: /home/linuxbrew/.linuxbrew/bin/surveyor --log-level debug version
 
     - name: surveyor notes
-      if: steps.version.outputs.stage != 'development'
       env:
         GH_TOKEN: ${{ github.token }}
       run: /home/linuxbrew/.linuxbrew/bin/surveyor --log-level debug notes > "$RUNNER_TEMP/release-notes.md"
 
     - name: Upload Release Notes
-      if: steps.version.outputs.stage != 'development'
       uses: actions/upload-artifact@v7
       with:
         name: release-notes.md
