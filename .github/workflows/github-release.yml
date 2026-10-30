@@ -7,15 +7,6 @@ on:
         required: false
         type: string
         default: ubuntu-latest
-      stage:
-        required: false
-        type: string
-        default: release
-        description: |
-          Release stage from Surveyor.
-
-          - `release` creates a release
-          - `prerelease` creates a prerelease
       version:
         required: true
         type: string
@@ -46,7 +37,6 @@ jobs:
         name: ${{ inputs.notes_artifact }}
 
     - name: Create Release
-      if: inputs.stage == 'release'
       env:
         GH_TOKEN: ${{ github.token }}
       run: >
@@ -55,18 +45,6 @@ jobs:
         --title "v${{ inputs.version }}"
         --notes-file "${{ inputs.notes_file }}"
         --target ${{ github.ref_name }}
-
-    - name: Create Prerelease
-      if: inputs.stage == 'prerelease'
-      env:
-        GH_TOKEN: ${{ github.token }}
-      run: >
-        gh release create
-        "v${{ inputs.version }}"
-        --title "v${{ inputs.version }}"
-        --notes-file "${{ inputs.notes_file }}"
-        --target ${{ github.ref_name }}
-        --prerelease
 
     - name: Remove release notes
       run: rm -f "${{ inputs.notes_artifact }}"

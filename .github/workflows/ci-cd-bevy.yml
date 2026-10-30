@@ -85,7 +85,6 @@ jobs:
     - test
     - build
     with:
-      stage: ${{ needs.surveyor.outputs.stage }}
       version: ${{ needs.surveyor.outputs.version }}
       binary_name: ${{ inputs.binary_name }}
 
