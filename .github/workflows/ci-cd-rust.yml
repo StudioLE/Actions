@@ -67,7 +67,7 @@ on:
         required: false
         type: string
         default: ""
-      brew_formula:
+      brew_formula_file:
         required: false
         type: string
         default: ""
@@ -134,7 +134,7 @@ jobs:
 
   brew:
     name: Brew
-    if: needs.surveyor.outputs.stage == 'release' && needs.surveyor.outputs.tagged != 'true' && inputs.brew_repo != '' && inputs.brew_formula != ''
+    if: needs.surveyor.outputs.stage == 'release' && needs.surveyor.outputs.tagged != 'true' && inputs.brew_repo != '' && inputs.brew_formula_file != ''
     uses: StudioLE/Actions/.github/workflows/brew-release.yml@v8
     needs:
     - surveyor
@@ -143,7 +143,7 @@ jobs:
       version: ${{ needs.surveyor.outputs.version }}
       binary_name: ${{ inputs.binary_name }}
       brew_repo: ${{ inputs.brew_repo }}
-      brew_formula: ${{ inputs.brew_formula }}
+      brew_formula_file: ${{ inputs.brew_formula_file }}
     secrets:
       brew_repo_token: ${{ secrets.brew_repo_token }}
 

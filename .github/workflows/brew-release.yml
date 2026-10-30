@@ -16,9 +16,15 @@ on:
       brew_repo:
         required: true
         type: string
-      brew_formula:
+      brew_formula_file:
         required: true
         type: string
+        description: |
+          Path to the Homebrew formula template in the calling repository.
+
+          - `{{version}}` is replaced with the release version
+          - `{{binary_name}}` is replaced with the binary name
+          - `{{sha256:<target>}}` is replaced with the SHA256 of the `<target>` archive
     secrets:
       brew_repo_token:
         required: true
@@ -45,11 +51,8 @@ jobs:
     - name: Create Formula directory
       run: mkdir -p Formula
 
-    - name: Write formula
-      run: |
-        cat > Formula/${{ inputs.binary_name }}.rb << 'TEMPLATE_EOF'
-        ${{ inputs.brew_formula }}
-        TEMPLATE_EOF
+    - name: Copy formula template
+      run: cp "${{ inputs.brew_formula_file }}" Formula/${{ inputs.binary_name }}.rb
 
     - name: Insert version
       run: sed -i "s|{{version}}|${{ inputs.version }}|g" Formula/${{ inputs.binary_name }}.rb
