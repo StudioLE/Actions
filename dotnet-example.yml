@@ -22,4 +22,3 @@ jobs:
       gh_token: ${{ secrets.GITHUB_TOKEN }}
       nuget_token: ${{ secrets.NUGET_TOKEN }}
       packages_token: ${{ secrets.PACKAGES_TOKEN }}
-      tests_token: ${{ secrets.TESTS_TOKEN }}

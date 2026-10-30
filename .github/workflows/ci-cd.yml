@@ -47,9 +47,6 @@ on:
         required: true
       gh_token:
         required: true
-      tests_token:
-        required: false
-        description: Unused. Kept so callers still passing it don't fail.
       documentation_token:
         required: true
       nuget_token:
