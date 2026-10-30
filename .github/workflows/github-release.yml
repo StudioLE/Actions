@@ -24,6 +24,13 @@ on:
 
 jobs:
 
+  # Create a draft release, attach binaries, then publish
+  #
+  # Immutable releases lock assets and the tag on publish, so everything is attached while still a draft.
+  #
+  # Rerun strategy:
+  # - A draft left by a failed run is deleted and recreated
+  # - An already published release fails the job
   github-release:
     name: GitHub Release
     runs-on: ${{ inputs.os }}
@@ -36,7 +43,41 @@ jobs:
       with:
         name: ${{ inputs.notes_artifact }}
 
-    - name: Create Release
+    - name: Find Existing Release
+      id: existing
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        if is_draft=$(gh release view "v${{ inputs.version }}" --json isDraft --jq .isDraft 2> "$RUNNER_TEMP/release-view-error")
+        then
+          if [[ "$is_draft" == "true" ]]
+          then
+            state=draft
+          else
+            state=published
+          fi
+        elif [[ "$(cat "$RUNNER_TEMP/release-view-error")" == "release not found" ]]
+        then
+          state=none
+        else
+          cat "$RUNNER_TEMP/release-view-error" >&2
+          exit 1
+        fi
+        echo "state=$state" >> "$GITHUB_OUTPUT"
+
+    - name: Fail If Published
+      if: steps.existing.outputs.state == 'published'
+      run: |
+        echo "::error::Release v${{ inputs.version }} is already published"
+        exit 1
+
+    - name: Delete Stale Draft
+      if: steps.existing.outputs.state == 'draft'
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: gh release delete "v${{ inputs.version }}" --yes
+
+    - name: Create Draft
       env:
         GH_TOKEN: ${{ github.token }}
       run: >
@@ -44,7 +85,8 @@ jobs:
         "v${{ inputs.version }}"
         --title "v${{ inputs.version }}"
         --notes-file "${{ inputs.notes_file }}"
-        --target ${{ github.ref_name }}
+        --target ${{ github.sha }}
+        --draft
 
     - name: Remove release notes
       run: rm -f "${{ inputs.notes_artifact }}"
@@ -67,7 +109,15 @@ jobs:
         gh release upload
         "v${{ inputs.version }}"
         artifacts/*
-        --clobber
         --repo "${{ github.repository }}"
       env:
         GH_TOKEN: ${{ github.token }}
+
+    - name: Publish Release
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: >
+        gh release edit
+        "v${{ inputs.version }}"
+        --draft=false
+        --latest
