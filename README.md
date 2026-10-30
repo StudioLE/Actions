@@ -152,16 +152,12 @@ flowchart TD
     dioxus-push[*dioxus-push*
     Deploy WebAssembly to web repository]:::PUSH
 
-    environment[*environment*
-    Update GitHub Environment]:::PUSH
-
     %% Main workflow connections
     surveyor --> dioxus-build-web
 
     dioxus-build-web --> git-tag
     dioxus-build-web --> github-release
     dioxus-build-web --> dioxus-push
-    dioxus-build-web --> environment
 
     %% Styling with Tailwind colors
     classDef SURVEYOR fill:#fde047
@@ -207,15 +203,11 @@ flowchart TD
         Publish release Docker image]:::PUSH
     end
 
-    environment[*environment*
-    Update GitHub Environment]:::PUSH
-
     %% Main workflow connections
     surveyor --> cargo-build
 
     cargo-build --> git-tag
     cargo-build --> github-release
-    cargo-build --> environment
 
     github-release --> cargo-publish
     github-release --> brew-release

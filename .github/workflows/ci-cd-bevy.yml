@@ -29,8 +29,6 @@ on:
     outputs:
       version:
         value: ${{ jobs.surveyor.outputs.version }}
-      environment:
-        value: ${{ jobs.surveyor.outputs.environment }}
       type:
         value: ${{ jobs.surveyor.outputs.type }}
 

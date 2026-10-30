@@ -22,8 +22,6 @@ on:
     outputs:
       version:
         value: ${{ jobs.surveyor.outputs.version }}
-      environment:
-        value: ${{ jobs.surveyor.outputs.environment }}
       type:
         value: ${{ jobs.surveyor.outputs.type }}
 
@@ -82,15 +80,3 @@ jobs:
       message: "feat: Added ${{ needs.surveyor.outputs.version }} WebAssembly build"
     secrets:
       repo_token: ${{ secrets.web_repo_token }}
-
-  environment:
-    name: Environment
-    if: needs.surveyor.outputs.environment != ''
-    needs:
-    - surveyor
-    - dioxus-build-web
-    runs-on: ubuntu-latest
-    environment: ${{ needs.surveyor.outputs.environment }}
-    steps:
-    - run: |
-        echo "Environment: ${{ needs.surveyor.outputs.environment }}"

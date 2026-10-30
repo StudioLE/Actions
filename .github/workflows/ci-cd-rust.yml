@@ -85,8 +85,6 @@ on:
     outputs:
       version:
         value: ${{ jobs.surveyor.outputs.version }}
-      environment:
-        value: ${{ jobs.surveyor.outputs.environment }}
       type:
         value: ${{ jobs.surveyor.outputs.type }}
 
@@ -200,15 +198,3 @@ jobs:
       tag: latest
     secrets:
       password: ${{ secrets.docker_password }}
-
-  environment:
-    name: Environment
-    if: needs.surveyor.outputs.environment != ''
-    needs:
-    - surveyor
-    - cargo-build
-    runs-on: ubuntu-latest
-    environment: ${{ needs.surveyor.outputs.environment }}
-    steps:
-    - run: |
-        echo "Environment: ${{ needs.surveyor.outputs.environment }}"

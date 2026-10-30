@@ -85,8 +85,6 @@ on:
     outputs:
       version:
         value: ${{ jobs.rust.outputs.version }}
-      environment:
-        value: ${{ jobs.rust.outputs.environment }}
       type:
         value: ${{ jobs.rust.outputs.type }}
 
