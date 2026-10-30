@@ -7,6 +7,14 @@ on:
         required: false
         type: string
         default: ubuntu-latest
+      cargo_publish_args:
+        required: true
+        type: string
+        description: |
+          `-p` flag for each crate to publish, from Surveyor.
+
+          - Unchanged crates keep a version already on crates.io, so they're left out
+          - Cargo publishes the listed crates in dependency order
     secrets:
       cargo_registry_token:
         required: true
@@ -33,6 +41,6 @@ jobs:
       run: git --no-pager diff --color
 
     - name: cargo publish
-      run: cargo publish --locked --allow-dirty --no-verify
+      run: cargo publish --locked --allow-dirty --no-verify ${{ inputs.cargo_publish_args }}
       env:
         CARGO_REGISTRY_TOKEN: ${{ secrets.cargo_registry_token }}

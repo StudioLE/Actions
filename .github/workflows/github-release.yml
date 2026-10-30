@@ -7,10 +7,15 @@ on:
         required: false
         type: string
         default: ubuntu-latest
-      type:
+      stage:
         required: false
         type: string
         default: release
+        description: |
+          Release stage from Surveyor.
+
+          - `release` creates a release
+          - `prerelease` creates a prerelease
       version:
         required: true
         type: string
@@ -41,7 +46,7 @@ jobs:
         name: ${{ inputs.notes_artifact }}
 
     - name: Create Release
-      if: inputs.type == 'release'
+      if: inputs.stage == 'release'
       env:
         GH_TOKEN: ${{ github.token }}
       run: >
@@ -52,7 +57,7 @@ jobs:
         --target ${{ github.ref_name }}
 
     - name: Create Prerelease
-      if: inputs.type == 'prerelease'
+      if: inputs.stage == 'prerelease'
       env:
         GH_TOKEN: ${{ github.token }}
       run: >

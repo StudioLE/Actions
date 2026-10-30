@@ -85,8 +85,14 @@ on:
     outputs:
       version:
         value: ${{ jobs.rust.outputs.version }}
-      type:
-        value: ${{ jobs.rust.outputs.type }}
+      stage:
+        value: ${{ jobs.rust.outputs.stage }}
+      channel:
+        value: ${{ jobs.rust.outputs.channel }}
+      change:
+        value: ${{ jobs.rust.outputs.change }}
+      tagged:
+        value: ${{ jobs.rust.outputs.tagged }}
 
 jobs:
 

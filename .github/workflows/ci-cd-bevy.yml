@@ -29,8 +29,14 @@ on:
     outputs:
       version:
         value: ${{ jobs.surveyor.outputs.version }}
-      type:
-        value: ${{ jobs.surveyor.outputs.type }}
+      stage:
+        value: ${{ jobs.surveyor.outputs.stage }}
+      channel:
+        value: ${{ jobs.surveyor.outputs.channel }}
+      change:
+        value: ${{ jobs.surveyor.outputs.change }}
+      tagged:
+        value: ${{ jobs.surveyor.outputs.tagged }}
 
 jobs:
 
@@ -47,7 +53,7 @@ jobs:
   build:
     name: Build
     uses: StudioLE/Actions/.github/workflows/bevy-build.yml@v8
-    if: needs.surveyor.outputs.version != ''
+    if: needs.surveyor.outputs.stage != 'development'
     needs:
     - surveyor
     with:
@@ -61,7 +67,7 @@ jobs:
 
   git-tag:
     name: Tag
-    if: needs.surveyor.outputs.type == 'prerelease'
+    if: needs.surveyor.outputs.stage == 'prerelease'
     uses: StudioLE/Actions/.github/workflows/git-tag.yml@v8
     needs:
     - surveyor
@@ -72,20 +78,20 @@ jobs:
 
   github-release:
     name: Release
-    if: needs.surveyor.outputs.type == 'release'
+    if: needs.surveyor.outputs.stage == 'release'
     uses: StudioLE/Actions/.github/workflows/github-release.yml@v8
     needs:
     - surveyor
     - test
     - build
     with:
-      type: ${{ needs.surveyor.outputs.type }}
+      stage: ${{ needs.surveyor.outputs.stage }}
       version: ${{ needs.surveyor.outputs.version }}
       binary_name: ${{ inputs.binary_name }}
 
   push-webassembly:
     name: Push WebAssembly
-    if: needs.surveyor.outputs.type == 'release' && inputs.web_repo_name != ''
+    if: needs.surveyor.outputs.stage == 'release' && inputs.web_repo_name != ''
     uses: StudioLE/Actions/.github/workflows/push-to-repo.yml@v8
     needs:
     - surveyor

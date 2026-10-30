@@ -86,7 +86,7 @@ flowchart TD
 ```mermaid
 flowchart TD
     surveyor[*surveyor*
-    Determine version and release type and compile release notes with Surveyor]:::SURVEYOR
+    Version crates and compile release notes with Surveyor]:::SURVEYOR
 
     test[*test*
     Run tests]:::TEST
@@ -102,7 +102,7 @@ flowchart TD
     end
 
     cargo-publish[*cargo-publish*
-    Publish to crates.io]:::PUSH
+    Publish bumped crates to crates.io]:::PUSH
     push-webassembly[*push-webassembly*
     Publish WebAssembly to web repo]:::PUSH
 
@@ -137,7 +137,7 @@ flowchart TD
 ```mermaid
 flowchart TD
     surveyor[*surveyor*
-    Determine version and release type with Surveyor]:::SURVEYOR
+    Version crates and compile release notes with Surveyor]:::SURVEYOR
 
     dioxus-build-web[*dioxus-build-web*
     Build Dioxus WebAssembly application]:::BUILD
@@ -175,7 +175,7 @@ General-purpose Rust CI/CD workflow suitable for fullstack applications, CLI too
 ```mermaid
 flowchart TD
     surveyor[*surveyor*
-    Determine version and release type with Surveyor]:::SURVEYOR
+    Version crates and compile release notes with Surveyor]:::SURVEYOR
 
     cargo-build[*cargo-build*
     Build and test Rust package]:::BUILD
@@ -189,7 +189,7 @@ flowchart TD
 
     subgraph PUBLISH[Publish]
         cargo-publish[*cargo-publish*
-        Publish to crates.io]:::PUSH
+        Publish bumped crates to crates.io]:::PUSH
         brew-release[*brew-release*
         Generate and publish Homebrew formula]:::PUSH
     end
