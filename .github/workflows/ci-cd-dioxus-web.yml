@@ -50,7 +50,7 @@ jobs:
 
   git-tag:
     name: Tag
-    if: needs.surveyor.outputs.stage == 'prerelease'
+    if: needs.surveyor.outputs.stage == 'prerelease' && needs.surveyor.outputs.tagged != 'true'
     uses: StudioLE/Actions/.github/workflows/git-tag.yml@v8
     needs:
     - surveyor
@@ -60,7 +60,7 @@ jobs:
 
   github-release:
     name: Release
-    if: needs.surveyor.outputs.stage == 'release'
+    if: needs.surveyor.outputs.stage == 'release' && needs.surveyor.outputs.tagged != 'true'
     uses: StudioLE/Actions/.github/workflows/github-release.yml@v8
     needs:
     - surveyor
@@ -72,7 +72,7 @@ jobs:
 
   dioxus-push:
     name: Push Dioxus
-    if: needs.surveyor.outputs.stage == 'release' && inputs.web_repo_name != ''
+    if: needs.surveyor.outputs.stage == 'release' && needs.surveyor.outputs.tagged != 'true' && inputs.web_repo_name != ''
     uses: StudioLE/Actions/.github/workflows/push-to-repo.yml@v8
     needs:
     - surveyor
