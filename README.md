@@ -219,7 +219,6 @@ flowchart TD
 
     github-release --> cargo-publish
     github-release --> brew-release
-    cargo-build --> brew-release
 
     surveyor --> docker-build
     docker-build --> docker-push-prerelease
