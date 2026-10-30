@@ -66,7 +66,7 @@ jobs:
 
   test-ubuntu:
     name: Ubuntu
-    uses: StudioLE/Actions/.github/workflows/dotnet-test.yml@v7
+    uses: StudioLE/Actions/.github/workflows/dotnet-test.yml@v8
     with:
       project: ""
       os: ubuntu-latest
@@ -80,7 +80,7 @@ jobs:
   test-windows:
     name: Windows
     if: github.ref_type == 'branch' && contains(fromJSON('["main", "alpha", "beta", "release"]'), github.ref_name)
-    uses: StudioLE/Actions/.github/workflows/dotnet-test.yml@v7
+    uses: StudioLE/Actions/.github/workflows/dotnet-test.yml@v8
     with:
       project: ""
       os: windows-latest
@@ -93,7 +93,7 @@ jobs:
   publish-cli-linux:
     name: Linux CLI
     if: github.ref_type == 'branch' && contains(fromJSON('["main", "alpha", "beta", "release"]'), github.ref_name) && inputs.cli_name != ''
-    uses: StudioLE/Actions/.github/workflows/dotnet-publish.yml@v7
+    uses: StudioLE/Actions/.github/workflows/dotnet-publish.yml@v8
     with:
       project: ${{ inputs.cli_project }}
       runtime: linux-x64
@@ -114,7 +114,7 @@ jobs:
   publish-cli-windows:
     name: Windows CLI
     if: github.ref_type == 'branch' && contains(fromJSON('["main", "alpha", "beta", "release"]'), github.ref_name) && inputs.cli_name != ''
-    uses: StudioLE/Actions/.github/workflows/dotnet-publish.yml@v7
+    uses: StudioLE/Actions/.github/workflows/dotnet-publish.yml@v8
     with:
       project: ${{ inputs.cli_project }}
       runtime: win-x64
@@ -135,7 +135,7 @@ jobs:
   documentation:
     name: Documentation
     if: github.ref_type == 'branch' && contains(fromJSON('["main", "alpha", "beta", "release"]'), github.ref_name) && inputs.documentation_section != ''
-    uses: StudioLE/Actions/.github/workflows/illuminate-generate.yml@v7
+    uses: StudioLE/Actions/.github/workflows/illuminate-generate.yml@v8
     with:
       project: ""
       os: ubuntu-latest
@@ -152,7 +152,7 @@ jobs:
     if: github.ref_type == 'branch' && contains(fromJSON('["main", "alpha", "beta", "release"]'), github.ref_name)
     needs:
     - test-ubuntu
-    uses: StudioLE/Actions/.github/workflows/surveyor-release.yml@v7
+    uses: StudioLE/Actions/.github/workflows/surveyor-release.yml@v8
     with:
       nuget_feed: https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
       nuget_username: ${{ github.repository_owner }}
@@ -162,7 +162,7 @@ jobs:
   docker-build:
     name: Docker Build
     if: github.ref_type == 'branch' && contains(fromJSON('["main", "alpha", "beta", "release"]'), github.ref_name) && inputs.docker_name != ''
-    uses: StudioLE/Actions/.github/workflows/docker-build.yml@v7
+    uses: StudioLE/Actions/.github/workflows/docker-build.yml@v8
     with:
       name: ${{ inputs.docker_name }}
       user: studiole
@@ -175,7 +175,7 @@ jobs:
     needs:
     - docker-build
     - release
-    uses: StudioLE/Actions/.github/workflows/docker-push.yml@v7
+    uses: StudioLE/Actions/.github/workflows/docker-push.yml@v8
     with:
       name: ${{ inputs.docker_name }}
       user: studiole
@@ -190,7 +190,7 @@ jobs:
     needs:
     - docker-build
     - release
-    uses: StudioLE/Actions/.github/workflows/docker-push.yml@v7
+    uses: StudioLE/Actions/.github/workflows/docker-push.yml@v8
     with:
       name: ${{ inputs.docker_name }}
       user: studiole
@@ -203,7 +203,7 @@ jobs:
     name: GitHub
     needs:
     - release
-    uses: StudioLE/Actions/.github/workflows/push-to-nuget.yml@v7
+    uses: StudioLE/Actions/.github/workflows/push-to-nuget.yml@v8
     with:
       nuget_feed: https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
       nuget_username: ${{ github.repository_owner }}
@@ -215,7 +215,7 @@ jobs:
     if: needs.release.outputs.type == 'release' && inputs.nuget
     needs:
     - release
-    uses: StudioLE/Actions/.github/workflows/push-to-nuget.yml@v7
+    uses: StudioLE/Actions/.github/workflows/push-to-nuget.yml@v8
     with:
       nuget_feed: https://api.nuget.org/v3/index.json
       nuget_username: ""
@@ -228,7 +228,7 @@ jobs:
     needs:
     - publish-cli-linux
     - release
-    uses: StudioLE/Actions/.github/workflows/push-to-github-releases.yml@v7
+    uses: StudioLE/Actions/.github/workflows/push-to-github-releases.yml@v8
     with:
       artifact: Cli-Linux
       name: ${{ inputs.cli_name }}-linux-x64-v${{ needs.release.outputs.version }}
@@ -242,7 +242,7 @@ jobs:
     - test-windows
     - publish-cli-windows
     - release
-    uses: StudioLE/Actions/.github/workflows/push-to-github-releases.yml@v7
+    uses: StudioLE/Actions/.github/workflows/push-to-github-releases.yml@v8
     with:
       artifact: Cli-Windows
       name: ${{ inputs.cli_name }}-win-x64-v${{ needs.release.outputs.version }}.exe
@@ -255,7 +255,7 @@ jobs:
     needs:
     - documentation
     - release
-    uses: StudioLE/Actions/.github/workflows/push-to-repo.yml@v7
+    uses: StudioLE/Actions/.github/workflows/push-to-repo.yml@v8
     with:
       repo: StudioLE/Documentation
       artifact: Documentation

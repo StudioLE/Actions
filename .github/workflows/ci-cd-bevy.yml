@@ -38,17 +38,17 @@ jobs:
 
   surveyor:
     name: Surveyor
-    uses: StudioLE/Actions/.github/workflows/rust-surveyor.yml@v7
+    uses: StudioLE/Actions/.github/workflows/rust-surveyor.yml@v8
 
   test:
     name: Test
-    uses: StudioLE/Actions/.github/workflows/bevy-test.yml@v7
+    uses: StudioLE/Actions/.github/workflows/bevy-test.yml@v8
     needs:
     - surveyor
 
   build:
     name: Build
-    uses: StudioLE/Actions/.github/workflows/bevy-build.yml@v7
+    uses: StudioLE/Actions/.github/workflows/bevy-build.yml@v8
     if: needs.surveyor.outputs.version != ''
     needs:
     - surveyor
@@ -64,7 +64,7 @@ jobs:
   git-tag:
     name: Tag
     if: needs.surveyor.outputs.type == 'prerelease'
-    uses: StudioLE/Actions/.github/workflows/git-tag.yml@v7
+    uses: StudioLE/Actions/.github/workflows/git-tag.yml@v8
     needs:
     - surveyor
     - test
@@ -75,7 +75,7 @@ jobs:
   github-release:
     name: Release
     if: needs.surveyor.outputs.type == 'release'
-    uses: StudioLE/Actions/.github/workflows/github-release.yml@v7
+    uses: StudioLE/Actions/.github/workflows/github-release.yml@v8
     needs:
     - surveyor
     - test
@@ -88,7 +88,7 @@ jobs:
   push-webassembly:
     name: Push WebAssembly
     if: needs.surveyor.outputs.type == 'release' && inputs.web_repo_name != ''
-    uses: StudioLE/Actions/.github/workflows/push-to-repo.yml@v7
+    uses: StudioLE/Actions/.github/workflows/push-to-repo.yml@v8
     needs:
     - surveyor
     - test

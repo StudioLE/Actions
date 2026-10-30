@@ -31,11 +31,11 @@ jobs:
 
   surveyor:
     name: Surveyor
-    uses: StudioLE/Actions/.github/workflows/rust-surveyor.yml@v7
+    uses: StudioLE/Actions/.github/workflows/rust-surveyor.yml@v8
 
   dioxus-build-web:
     name: Dioxus Build
-    uses: StudioLE/Actions/.github/workflows/dioxus-build-web.yml@v7
+    uses: StudioLE/Actions/.github/workflows/dioxus-build-web.yml@v8
     needs:
     - surveyor
     with:
@@ -47,7 +47,7 @@ jobs:
   git-tag:
     name: Tag
     if: needs.surveyor.outputs.type == 'prerelease'
-    uses: StudioLE/Actions/.github/workflows/git-tag.yml@v7
+    uses: StudioLE/Actions/.github/workflows/git-tag.yml@v8
     needs:
     - surveyor
     - dioxus-build-web
@@ -57,7 +57,7 @@ jobs:
   github-release:
     name: Release
     if: needs.surveyor.outputs.type == 'release'
-    uses: StudioLE/Actions/.github/workflows/github-release.yml@v7
+    uses: StudioLE/Actions/.github/workflows/github-release.yml@v8
     needs:
     - surveyor
     - dioxus-build-web
@@ -69,7 +69,7 @@ jobs:
   dioxus-push:
     name: Push Dioxus
     if: needs.surveyor.outputs.type == 'release' && inputs.web_repo_name != ''
-    uses: StudioLE/Actions/.github/workflows/push-to-repo.yml@v7
+    uses: StudioLE/Actions/.github/workflows/push-to-repo.yml@v8
     needs:
     - surveyor
     - dioxus-build-web

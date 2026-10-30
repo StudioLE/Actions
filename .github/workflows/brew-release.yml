@@ -97,7 +97,7 @@ jobs:
 
   push-formula:
     name: Push Formula
-    uses: StudioLE/Actions/.github/workflows/push-to-repo.yml@v7
+    uses: StudioLE/Actions/.github/workflows/push-to-repo.yml@v8
     needs: brew
     with:
       repo: ${{ inputs.brew_repo }}

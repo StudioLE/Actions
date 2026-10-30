@@ -11,7 +11,7 @@ jobs:
 
   ci-cd:
     name: CI/CD
-    uses: StudioLE/Actions/.github/workflows/ci-cd.yml@v7
+    uses: StudioLE/Actions/.github/workflows/ci-cd.yml@v8
     with:
       project: StudioLE.Example.Cli/src/StudioLE.Example.Cli.csproj
       cli: StudioLE.Example

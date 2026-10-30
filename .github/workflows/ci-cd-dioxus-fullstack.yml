@@ -94,7 +94,7 @@ jobs:
 
   rust:
     name: CI/CD
-    uses: StudioLE/Actions/.github/workflows/ci-cd-rust.yml@v7
+    uses: StudioLE/Actions/.github/workflows/ci-cd-rust.yml@v8
     with:
       package_name: ${{ inputs.package_name }}
       binary_name: ${{ inputs.binary_name }}

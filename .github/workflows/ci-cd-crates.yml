@@ -41,11 +41,11 @@ jobs:
 
   surveyor:
     name: Surveyor
-    uses: StudioLE/Actions/.github/workflows/rust-surveyor.yml@v7
+    uses: StudioLE/Actions/.github/workflows/rust-surveyor.yml@v8
 
   cargo-build:
     name: Cargo Build
-    uses: StudioLE/Actions/.github/workflows/cargo-build.yml@v7
+    uses: StudioLE/Actions/.github/workflows/cargo-build.yml@v8
     needs:
     - surveyor
     with:
@@ -59,7 +59,7 @@ jobs:
   git-tag:
     name: Tag
     if: needs.surveyor.outputs.type == 'prerelease'
-    uses: StudioLE/Actions/.github/workflows/git-tag.yml@v7
+    uses: StudioLE/Actions/.github/workflows/git-tag.yml@v8
     needs:
     - surveyor
     - cargo-build
@@ -69,7 +69,7 @@ jobs:
   github-release:
     name: Release
     if: needs.surveyor.outputs.type == 'release'
-    uses: StudioLE/Actions/.github/workflows/github-release.yml@v7
+    uses: StudioLE/Actions/.github/workflows/github-release.yml@v8
     needs:
     - surveyor
     - cargo-build
@@ -80,7 +80,7 @@ jobs:
   cargo-publish:
     name: Cargo Publish
     if: needs.surveyor.outputs.type == 'release'
-    uses: StudioLE/Actions/.github/workflows/cargo-publish.yml@v7
+    uses: StudioLE/Actions/.github/workflows/cargo-publish.yml@v8
     needs:
     - surveyor
     - github-release
