@@ -52,9 +52,6 @@ jobs:
         # macOS on 64-bit ARM (11.0+, Big Sur+)
         - target: aarch64-apple-darwin
           os: macos-15
-        # macOS on 64-bit Intel (10.12+, Sierra+)
-        - target: x86_64-apple-darwin
-          os: macos-15-intel
         # Windows on 64-bit Intel/AMD
         - target: x86_64-pc-windows-msvc
           os: windows-latest
