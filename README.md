@@ -170,7 +170,7 @@ flowchart TD
 
 [`ci-cd-rust.yml`](.github/workflows/ci-cd-rust.yml)
 
-General-purpose Rust CI/CD workflow suitable for fullstack applications, CLI tools, and libraries. Also available as [`ci-cd-dioxus-fullstack.yml`](.github/workflows/ci-cd-dioxus-fullstack.yml) (wrapper for backward compatibility).
+General-purpose Rust CI/CD workflow suitable for fullstack applications, CLI tools, and libraries.
 
 ```mermaid
 flowchart TD
