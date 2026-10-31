@@ -13,8 +13,8 @@ jobs:
     name: CI/CD
     uses: StudioLE/Actions/.github/workflows/ci-cd.yml@v8
     with:
-      project: StudioLE.Example.Cli/src/StudioLE.Example.Cli.csproj
-      cli: StudioLE.Example
+      cli_project: StudioLE.Example.Cli/src/StudioLE.Example.Cli.csproj
+      cli_name: StudioLE.Example
       docker_name: example
       documentation_section: example
     secrets:
